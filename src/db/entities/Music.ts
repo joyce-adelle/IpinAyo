@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
-import { Languages } from "../../utilities/Languages";
 import { RelatedWords } from "../../utilities/RelatedWords";
 
 @Entity()
@@ -41,11 +40,8 @@ export class Music {
   @Column({type: "year", nullable: true})
   yearOfArrangement: string;
 
-  @Column({
-    type: "set",
-    enum: Languages
-})
-  languages: Languages[];
+  @Column("simple-array")
+  languages: string[];
 
   @Column({
     type: "enum",

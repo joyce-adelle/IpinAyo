@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable} from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
 import { RelatedWords } from "../../utilities/RelatedWords";
+import { Category } from "./Category";
 
 @Entity()
 export class Music {
@@ -60,5 +61,9 @@ export class Music {
     enum: RelatedWords
 })
   relatedWords: RelatedWords[];
+
+  @ManyToMany((type) => Category, (category) => category.relatedMusic)
+  @JoinTable()
+  categories: Category[];
 
 }

@@ -10,6 +10,6 @@ export enum ScoreType {
     LeadSheet = " lead sheet",
     ChordChart = "chord chart",
     Tablature = "tablature",
-    Instrumental = "instrumental"
+    LeadSheetAndAccompaniment = " lead sheet and accompaniment",
    
 }

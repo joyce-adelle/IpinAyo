@@ -50,7 +50,7 @@ export class Music {
 })
   scoreType: ScoreType;
 
-  @Column()
+  @Column({default: false})
   isVerified: boolean;
 
   @ManyToOne((type) => User, (user) => user.uploads)

@@ -10,7 +10,7 @@ export class Composer{
     
     @Column({
         type: "set",
-        enum: CompositionType,
+        enum: CompositionType
     })
     typeOfCompositions: CompositionType[]
 

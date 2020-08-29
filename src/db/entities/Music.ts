@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable} from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
-import { RelatedWords } from "../../utilities/RelatedWords";
 import { Category } from "./Category";
+import { RelatedPhrases } from "./RelatedPhrases";
 
 @Entity()
 export class Music {
@@ -56,14 +56,12 @@ export class Music {
   @ManyToOne((type) => User, (user) => user.uploads)
   uploadedBy: User;
 
-  @Column({
-    type: "set",
-    enum: RelatedWords
-})
-  relatedWords: RelatedWords[];
-
   @ManyToMany((type) => Category, (category) => category.relatedMusic)
   @JoinTable()
   categories: Category[];
+
+  @ManyToMany((type) => RelatedPhrases, (relatedPhrases) => relatedPhrases.relatedMusic)
+  @JoinTable()
+  relatedPhrases: RelatedPhrases[];
 
 }

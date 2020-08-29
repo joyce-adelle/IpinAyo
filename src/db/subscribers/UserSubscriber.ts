@@ -11,9 +11,6 @@ import { createHmac } from "crypto";
 
 @EventSubscriber()
 export class UserSubscriber implements EntitySubscriberInterface<User> {
-//   constructor(connection: Connection) {
-//     connection.subscribers.push(this);
-//   }
 
   listenTo() {
     return User;

@@ -1,4 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable} from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
 import { Category } from "./Category";
@@ -22,7 +33,7 @@ export class Music {
   @Column()
   title: string;
 
-  @Column({type: "text"})
+  @Column({ type: "text" })
   description: string;
 
   @Column({
@@ -30,7 +41,7 @@ export class Music {
   })
   composerName: string;
 
-  @Column({type: "year", nullable: true})
+  @Column({ type: "year", nullable: true })
   yearOfComposition: string;
 
   @Column({
@@ -38,7 +49,7 @@ export class Music {
   })
   arrangerName: string;
 
-  @Column({type: "year", nullable: true})
+  @Column({ type: "year", nullable: true })
   yearOfArrangement: string;
 
   @Column("simple-array")
@@ -46,11 +57,11 @@ export class Music {
 
   @Column({
     type: "enum",
-    enum: ScoreType
-})
+    enum: ScoreType,
+  })
   scoreType: ScoreType;
 
-  @Column({default: false})
+  @Column({ default: false })
   isVerified: boolean;
 
   @ManyToOne((type) => User, (user) => user.uploads)
@@ -60,8 +71,34 @@ export class Music {
   @JoinTable()
   categories: Category[];
 
-  @ManyToMany((type) => RelatedPhrases, (relatedPhrases) => relatedPhrases.relatedMusic)
+  @ManyToMany(
+    (type) => RelatedPhrases,
+    (relatedPhrases) => relatedPhrases.relatedMusic
+  )
   @JoinTable()
   relatedPhrases: RelatedPhrases[];
 
+  @CreateDateColumn({
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP(6)",
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP(6)",
+    onUpdate: "CURRENT_TIMESTAMP(6)",
+  })
+  updatedAt: Date;
+
+  @CreateDateColumn({
+    type: "timestamp",
+    nullable: true,
+    default: null,
+  })
+  verifiedAt: Date;
+
+  @OneToOne((type) => User)
+  @JoinColumn()
+  verifiedBy: User;
 }

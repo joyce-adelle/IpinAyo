@@ -22,7 +22,7 @@ export class Music {
 
   @Column({
     nullable: false,
-    unique: true
+    unique: true,
   })
   score: string;
 

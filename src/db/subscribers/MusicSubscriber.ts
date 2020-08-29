@@ -36,7 +36,6 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
     }
   }
 
-
   beforeInsert(event: InsertEvent<Music>) {
     if (event.entity.isVerified) {
       event.entity.verifiedAt = new Date();

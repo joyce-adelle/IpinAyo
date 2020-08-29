@@ -1,19 +1,18 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToOne} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from "typeorm";
 import { User } from "./User";
 import { CompositionType } from "../../utilities/CompositionType";
 
 @Entity()
-export class Composer{
+export class Composer {
+  @PrimaryGeneratedColumn()
+  id: string;
 
-    @PrimaryGeneratedColumn()
-    id: string;
-    
-    @Column({
-        type: "set",
-        enum: CompositionType
-    })
-    typeOfCompositions: CompositionType[]
+  @Column({
+    type: "set",
+    enum: CompositionType,
+  })
+  typeOfCompositions: CompositionType[];
 
-    @OneToOne(type => User, user => user.composer)
-    user: User;
+  @OneToOne((type) => User, (user) => user.composer)
+  user: User;
 }

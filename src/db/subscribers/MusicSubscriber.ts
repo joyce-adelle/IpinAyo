@@ -19,7 +19,7 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
       event.manager
         .createQueryBuilder()
         .update(Music)
-        .set({ verifiedAt: () => `CURRENT_TIMESTAMP(6)` })
+        .set({ verifiedAt: () => "CURRENT_TIMESTAMP(6)" })
         .where("id = :id", { id: event.entity.id })
         .execute();
     }
@@ -30,7 +30,7 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
       event.manager
         .createQueryBuilder()
         .update(Music)
-        .set({ verifiedAt: () => `CURRENT_TIMESTAMP(6)` })
+        .set({ verifiedAt: () => "CURRENT_TIMESTAMP(6)" })
         .where("id = :id", { id: event.entity.id })
         .execute();
     }

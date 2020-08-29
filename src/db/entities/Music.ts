@@ -22,6 +22,7 @@ export class Music {
 
   @Column({
     nullable: false,
+    unique: true
   })
   score: string;
 
@@ -98,7 +99,6 @@ export class Music {
   })
   verifiedAt: Date;
 
-  @OneToOne((type) => User)
-  @JoinColumn()
+  @ManyToOne((type) => User)
   verifiedBy: User;
 }

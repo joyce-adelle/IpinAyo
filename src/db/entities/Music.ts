@@ -7,8 +7,6 @@ import {
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
-  JoinColumn,
 } from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
@@ -98,7 +96,7 @@ export class Music {
   @Column({
     type: "timestamp",
     nullable: true,
-    precision: 6
+    precision: 6,
   })
   verifiedAt: Date;
 

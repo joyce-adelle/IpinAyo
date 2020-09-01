@@ -14,12 +14,16 @@ export class RelatedPhrasesSubscriber
 
   async beforeInsert(event: InsertEvent<RelatedPhrases>) {
     if (!event.entity.groupId) {
-      let maxId = await event.manager
+      let maxGroupId: number;
+      await event.manager
         .getRepository(RelatedPhrases)
         .query(
-          "SELECT groupId FROM related_phrases WHERE groupId = ( SELECT MAX(groupId) FROM related_phrases )"
-        );
-      event.entity.groupId = String(<number>maxId + 1);
+          "SELECT DISTINCT groupId FROM related_phrases WHERE groupId = ( SELECT MAX(groupId) FROM related_phrases )"
+        )
+        .then((maxId) => {
+          maxGroupId = maxId[0] ? maxId[0].groupId : 0;
+        });
+      event.entity.groupId = String(++maxGroupId);
     }
   }
 }

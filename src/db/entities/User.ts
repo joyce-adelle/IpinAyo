@@ -7,15 +7,14 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
-  OneToOne,
-  JoinColumn,
 } from "typeorm";
 import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
-import { Composer } from "./Composer";
+import { CompositionType } from "../../utilities/CompositionType";
 
 @Entity()
 export class User {
+  [x: string]: {};
   @PrimaryGeneratedColumn()
   id: string;
 
@@ -38,12 +37,12 @@ export class User {
   @Column()
   isComposer: boolean;
 
-  @OneToOne((type) => Composer, (composer) => composer.user, {
-    cascade: true,
-    nullable: true,
+  @Column({
+    type: "set",
+    enum: CompositionType,
+    nullable: true
   })
-  @JoinColumn()
-  composer: Composer;
+  typeOfCompositions: CompositionType[];
 
   @OneToMany((type) => Music, (upload) => upload.uploadedBy)
   uploads: Music[];

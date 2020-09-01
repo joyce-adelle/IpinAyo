@@ -1,6 +1,4 @@
 export enum CompositionType {
-  Liturgical = "liturgical",
-  Religious = "religious",
-  Classical = "classical",
+  Sacred = "sacred",
   Secular = "secular",
 }

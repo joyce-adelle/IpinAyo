@@ -40,7 +40,7 @@ export class Music {
   @Column({
     nullable: true,
   })
-  composerName: string;
+  composers: string;
 
   @Column({ type: "year", nullable: true })
   yearOfComposition: string;
@@ -48,7 +48,7 @@ export class Music {
   @Column({
     nullable: true,
   })
-  arrangerName: string;
+  arrangers: string;
 
   @Column({ type: "year", nullable: true })
   yearOfArrangement: string;

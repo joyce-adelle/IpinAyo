@@ -128,12 +128,64 @@ async function main() {
   song1.composers = "Ehimanre Asuelinmen, Victus Eze";
   song1.description = "Sanctus in Yoruba";
   song1.languages = ["yoruba"];
-  song1.scoreType = ScoreType.Vocal;
+  song1.scoreType = ScoreType.Choral;
   song1.title = "Mimo l'Oluwa";
   song1.yearOfComposition = "2017";
   song1.relatedPhrases = [sanctusPhraseSave];
   song1.uploadedBy = user10;
   song1.isVerified = true;
+
+  const song2 = new Music();
+  song2.categories = [sanctusSave];
+  song2.score = "Aa g'obu k'Owoicho - Jacob Okwori.pdf";
+  song2.composers = "Jacob Okwori";
+  song2.description = "Entrance Hymn in Idoma meaning come before God";
+  song2.languages = ["Idoma"];
+  song2.scoreType = ScoreType.Choral;
+  song2.title = "Mimo l'Oluwa";
+  song2.yearOfComposition = "2011";
+  song2.relatedPhrases = [sanctusPhraseSave];
+  song2.uploadedBy = user10;
+  song2.isVerified = true;
+
+  const song3 = new Music();
+  song3.categories = [sanctusSave];
+  song3.score = "Mimo l'Oluwa - Ehimanre & Victus.pdf";
+  song3.composers = "Ehimanre Asuelinmen, Victus Eze";
+  song3.description = "Sanctus in Yoruba";
+  song3.languages = ["yoruba"];
+  song3.scoreType = ScoreType.Choral;
+  song3.title = "Mimo l'Oluwa";
+  song3.yearOfComposition = "2017";
+  song3.relatedPhrases = [sanctusPhraseSave];
+  song3.uploadedBy = user10;
+  song3.isVerified = true;
+
+  const song4 = new Music();
+  song4.categories = [sanctusSave];
+  song4.score = "Mimo l'Oluwa - Ehimanre & Victus.pdf";
+  song4.composers = "Ehimanre Asuelinmen, Victus Eze";
+  song4.description = "Sanctus in Yoruba";
+  song4.languages = ["yoruba"];
+  song4.scoreType = ScoreType.Choral;
+  song4.title = "Mimo l'Oluwa";
+  song4.yearOfComposition = "2017";
+  song4.relatedPhrases = [sanctusPhraseSave];
+  song4.uploadedBy = user10;
+  song4.isVerified = true;
+
+  const song5 = new Music();
+  song5.categories = [sanctusSave];
+  song5.score = "Mimo l'Oluwa - Ehimanre & Victus.pdf";
+  song5.composers = "Ehimanre Asuelinmen, Victus Eze";
+  song5.description = "Sanctus in Yoruba";
+  song5.languages = ["yoruba"];
+  song5.scoreType = ScoreType.Choral;
+  song5.title = "Mimo l'Oluwa";
+  song5.yearOfComposition = "2017";
+  song5.relatedPhrases = [sanctusPhraseSave];
+  song5.uploadedBy = user10;
+  song5.isVerified = true;
 
   connection.close();
 }

@@ -1,8 +1,5 @@
 export const RelatedPhrasesSeed = [
     {
-        phrase: "entrance"
-    },
-    {
         phrase: "kyrie"
     },
     {
@@ -15,15 +12,6 @@ export const RelatedPhrasesSeed = [
         phrase: "offertory"
     },
     {
-        phrase: "agnus dei"
-    },
-    {
         phrase: "pater nostram"
-    },
-    {
-        phrase: "communion"
-    },
-    {
-        phrase: "dismissal"
     }
 ]

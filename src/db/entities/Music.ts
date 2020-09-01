@@ -42,7 +42,7 @@ export class Music {
   })
   composers: string;
 
-  @Column({ type: "year", nullable: true })
+  @Column({ type: "char", nullable: true, length: 4 })
   yearOfComposition: string;
 
   @Column({
@@ -50,7 +50,7 @@ export class Music {
   })
   arrangers: string;
 
-  @Column({ type: "year", nullable: true })
+  @Column({ type: "char", nullable: true, length: 4 })
   yearOfArrangement: string;
 
   @Column("simple-array")
@@ -92,10 +92,13 @@ export class Music {
   })
   updatedAt: Date;
 
-  @CreateDateColumn({
+  @ManyToOne((type) => User)
+  updatedBy: User;
+
+  @Column({
     type: "timestamp",
     nullable: true,
-    default: null,
+    precision: 6
   })
   verifiedAt: Date;
 

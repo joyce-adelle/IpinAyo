@@ -3,6 +3,7 @@ export enum ScoreType {
   Miniature = "miniature",
   Study = "study",
   Piano = "piano",
+  Vocal = "vocal",
   Choral = "choral",
   Short = "short",
   Open = "open",

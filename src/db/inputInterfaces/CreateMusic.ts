@@ -1,7 +1,7 @@
-import { ScoreType } from "../utilities/ScoreType";
+import { ScoreType } from "../../utilities/ScoreType";
 
 export interface CreateMusic {
-  score: string;
+  score: File;
   title: string;
   description: string;
   scoreType: ScoreType;
@@ -10,7 +10,7 @@ export interface CreateMusic {
   categoryIds: string[];
   isVerified: boolean;
   uploadedById: string;
-  audio?: string;
+  audio?: File;
   composers?: string;
   yearOfComposition?: string;
   arrangers?: string;

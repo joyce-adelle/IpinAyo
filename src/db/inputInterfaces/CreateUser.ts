@@ -1,5 +1,6 @@
-import { UserRole } from "../utilities/UserRoles";
-import { CompositionType } from "../utilities/CompositionType";
+import { UserRole } from "../../utilities/UserRoles";
+import { CompositionType } from "../../utilities/CompositionType";
+
 
 export interface CreateUser {
   username: string;

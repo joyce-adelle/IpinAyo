@@ -1,7 +1,7 @@
-import { ScoreType } from "../utilities/ScoreType";
+import { ScoreType } from "../../utilities/ScoreType";
 
 export interface UpdateMusic {
-  score?: string;
+  score?: File;
   title?: string;
   description?: string;
   scoreType?: ScoreType;
@@ -9,7 +9,7 @@ export interface UpdateMusic {
   relatedPhrasesIds?: string[];
   categoryIds?: string[];
   isVerified?: boolean;
-  audio?: string;
+  audio?: File;
   composers?: string;
   yearOfComposition?: string;
   arrangers?: string;

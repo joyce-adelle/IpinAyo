@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  RelationId,
 } from "typeorm";
 import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
@@ -14,7 +15,6 @@ import { CompositionType } from "../../utilities/CompositionType";
 
 @Entity()
 export class User {
-  [x: string]: {};
   @PrimaryGeneratedColumn()
   id: string;
 
@@ -40,16 +40,22 @@ export class User {
   @Column({
     type: "set",
     enum: CompositionType,
-    nullable: true
+    nullable: true,
   })
   typeOfCompositions: CompositionType[];
 
   @OneToMany((type) => Music, (upload) => upload.uploadedBy)
   uploads: Music[];
 
+  @RelationId((uploadedMusic: User) => uploadedMusic.uploads)
+  uploadedMusicIds: string[];
+
   @ManyToMany((type) => Music)
   @JoinTable()
   downloads: Music[];
+
+  @RelationId((downloadedMusic: User) => downloadedMusic.downloads)
+  downloadedMusicIds: string[];
 
   @CreateDateColumn({
     type: "timestamp",

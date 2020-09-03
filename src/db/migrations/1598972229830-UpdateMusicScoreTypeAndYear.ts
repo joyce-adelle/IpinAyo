@@ -9,7 +9,7 @@ export class UpdateMusicScoreTypeAndYear1598972229830 implements MigrationInterf
         await queryRunner.query("ALTER TABLE `music` ADD `yearOfComposition` char(4) NULL");
         await queryRunner.query("ALTER TABLE `music` DROP COLUMN `yearOfArrangement`");
         await queryRunner.query("ALTER TABLE `music` ADD `yearOfArrangement` char(4) NULL");
-        await queryRunner.query("ALTER TABLE `music` CHANGE `scoreType` `scoreType` enum ('full', 'miniature', 'study', 'piano', 'vocal', 'choral', 'short', 'open', ' lead sheet', 'chord chart', 'tablature', ' lead sheet and accompaniment') NOT NULL");
+        await queryRunner.query("ALTER TABLE `music` CHANGE `scoreType` `scoreType` enum ('full', 'miniature', 'study', 'piano', 'vocal', 'choral', 'organ', 'short', 'open', ' lead sheet', 'chord chart', 'tablature', ' lead sheet and accompaniment') NOT NULL");
         await queryRunner.query("ALTER TABLE `music` ADD CONSTRAINT `FK_e08b3c0149ec298629d7ad3de62` FOREIGN KEY (`updatedById`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION");
     }
 

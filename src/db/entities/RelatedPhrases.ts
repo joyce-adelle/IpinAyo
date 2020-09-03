@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  RelationId,
+} from "typeorm";
 import { Music } from "./Music";
 
 @Entity()
@@ -14,4 +20,7 @@ export class RelatedPhrases {
 
   @ManyToMany((type) => Music, (relatedMusic) => relatedMusic.relatedPhrases)
   relatedMusic: Music[];
+
+  @RelationId((relatedMusic: RelatedPhrases) => relatedMusic.relatedMusic)
+  relatedMusicIds: string[];
 }

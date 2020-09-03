@@ -13,9 +13,11 @@ export class RemovedComposerUpdateMusicComposers1598946567813 implements Migrati
         await queryRunner.query("ALTER TABLE `music` ADD `arrangers` varchar(255) NULL");
         await queryRunner.query("ALTER TABLE `user` DROP COLUMN `typeOfCompositions`");
         await queryRunner.query("ALTER TABLE `user` ADD `typeOfCompositions` set ('sacred', 'secular') NULL");
+        await queryRunner.query("DROP TABLE `composer`");
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query("CREATE TABLE `composer`");
         await queryRunner.query("ALTER TABLE `user` DROP COLUMN `typeOfCompositions`");
         await queryRunner.query("ALTER TABLE `user` ADD `typeOfCompositions` int NULL");
         await queryRunner.query("ALTER TABLE `music` DROP COLUMN `arrangers`");

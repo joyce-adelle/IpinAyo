@@ -6,6 +6,7 @@ import {
   Column,
   TreeChildren,
   TreeParent,
+  RelationId,
 } from "typeorm";
 import { Music } from "./Music";
 
@@ -15,7 +16,7 @@ export class Category {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @TreeChildren()
@@ -26,4 +27,7 @@ export class Category {
 
   @ManyToMany((type) => Music, (music) => music.categories)
   relatedMusic: Music[];
+
+  @RelationId((relatedMusic: Category) => relatedMusic.relatedMusic)
+  relatedMusicIds: string[];
 }

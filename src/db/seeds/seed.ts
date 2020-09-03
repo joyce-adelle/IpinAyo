@@ -97,7 +97,7 @@ async function main() {
     await cat.save(concludingRites);
 
     const dismissal = new Category();
-    dismissal.name = "Entrance";
+    dismissal.name = "Dismissal";
     dismissal.parent = concludingRites;
     const dismissalSave = await cat.save(dismissal);
 
@@ -203,7 +203,7 @@ async function main() {
     song3.uploadedBy = user10Save;
     song3.isVerified = true;
     song3.verifiedBy = user10Save;
-    song3.audio = "Lamb of God.mp3";
+    song3.audio = "Lamb of God.mid";
     song3.arrangers = "Precious Owumi";
     song3.updatedBy = user10Save
 
@@ -230,7 +230,7 @@ async function main() {
     song5.composers = "Marco Frisina";
     song5.description = "Soul Of Christ in Latin";
     song5.languages = ["latin"];
-    song5.scoreType = ScoreType.Full;
+    song5.scoreType = ScoreType.Vocal;
     song5.title = "Anima Christi";
     song5.relatedPhrases = [communionPhraseSave];
     song5.uploadedBy = user10Save;

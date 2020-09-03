@@ -5,6 +5,7 @@ export enum ScoreType {
   Piano = "piano",
   Vocal = "vocal",
   Choral = "choral",
+  Organ = "organ",
   Short = "short",
   Open = "open",
   LeadSheet = " lead sheet",

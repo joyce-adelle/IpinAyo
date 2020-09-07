@@ -1,5 +1,4 @@
 import { RelatedPhrases } from "../entities/RelatedPhrases";
-import { RelatedPhrasesSeed } from "./RelatedPhrases.seed";
 import { createConnection } from "typeorm";
 import { Category } from "../entities/Category";
 import { Music } from "../entities/Music";
@@ -18,7 +17,25 @@ async function main() {
     const user = connection.getRepository(User);
     const mus = connection.getRepository(Music);
 
-    rel.save(RelatedPhrasesSeed);
+    let kyriePhrase = new RelatedPhrases();
+    kyriePhrase.phrase = "kyrie";
+    await rel.save(kyriePhrase);
+
+    let gloriaPhrase = new RelatedPhrases();
+    gloriaPhrase.phrase = "gloria";
+    await rel.save(gloriaPhrase);
+
+    let creedPhrase = new RelatedPhrases();
+    creedPhrase.phrase = "creed";
+    await rel.save(creedPhrase);
+
+    let offertoryPhrase = new RelatedPhrases();
+    offertoryPhrase.phrase = "offertory";
+    await rel.save(offertoryPhrase);
+
+    let paterPhrase = new RelatedPhrases();
+    paterPhrase.phrase = "pater nostram";
+    await rel.save(paterPhrase);
 
     let sanctusPhrase = new RelatedPhrases();
     sanctusPhrase.phrase = "sanctus";
@@ -173,7 +190,7 @@ async function main() {
     song1.uploadedBy = user10Save;
     song1.isVerified = true;
     song1.verifiedBy = user10Save;
-    song1.updatedBy = user10Save
+    song1.updatedBy = user10Save;
 
     const song2 = new Music();
     song2.categories = [entrancesave];
@@ -189,7 +206,7 @@ async function main() {
     song2.isVerified = true;
     song2.verifiedBy = user10Save;
     song2.audio = "Aa G'obu K'owoicho (Live Mass).mp3";
-    song2.updatedBy = user10Save
+    song2.updatedBy = user10Save;
 
     const song3 = new Music();
     song3.categories = [agnusDei];
@@ -205,7 +222,7 @@ async function main() {
     song3.verifiedBy = user10Save;
     song3.audio = "Lamb of God.mid";
     song3.arrangers = "Precious Owumi";
-    song3.updatedBy = user10Save
+    song3.updatedBy = user10Save;
 
     const song4 = new Music();
     song4.categories = [matrimonySave, communionSave];
@@ -222,7 +239,7 @@ async function main() {
     song4.verifiedBy = user10Save;
     song4.arrangers = "Joseph Barnby";
     song4.yearOfArrangement = "1889";
-    song4.updatedBy = user10Save
+    song4.updatedBy = user10Save;
 
     const song5 = new Music();
     song5.categories = [communionSave];
@@ -236,7 +253,7 @@ async function main() {
     song5.uploadedBy = user10Save;
     song5.isVerified = true;
     song5.verifiedBy = user10Save;
-    song5.updatedBy = user10Save
+    song5.updatedBy = user10Save;
 
     const song6 = new Music();
     song6.categories = [entrancesave];
@@ -250,7 +267,7 @@ async function main() {
     song6.isVerified = false;
     song6.audio = "Oni l'ojo pe (Live Mass).mp3";
     song6.arrangers = "Daniel Ebhomien";
-    song6.updatedBy = user1Save
+    song6.updatedBy = user1Save;
 
     const song7 = new Music();
     song7.categories = [communionSave];
@@ -262,7 +279,7 @@ async function main() {
     song7.relatedPhrases = [communionPhraseSave];
     song7.uploadedBy = user1Save;
     song7.isVerified = false;
-    song7.updatedBy = user1Save
+    song7.updatedBy = user1Save;
 
     const song8 = new Music();
     song8.categories = [dismissalSave];
@@ -274,7 +291,7 @@ async function main() {
     song8.relatedPhrases = [dismissalPhraseSave];
     song8.uploadedBy = user1Save;
     song8.isVerified = false;
-    song8.updatedBy = user1Save
+    song8.updatedBy = user1Save;
 
     await mus.save([song1, song2, song3, song4, song5, song6, song7, song8]);
 

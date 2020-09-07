@@ -18,10 +18,10 @@ export class RelatedPhrasesSubscriber
       await event.manager
         .getRepository(RelatedPhrases)
         .query(
-          "SELECT DISTINCT groupId FROM related_phrases WHERE groupId = ( SELECT MAX(groupId) FROM related_phrases )"
+          "SELECT DISTINCT MAX(groupId) as maxId FROM related_phrases"
         )
         .then((maxId) => {
-          maxGroupId = maxId[0] ? maxId[0].groupId : 0;
+          maxGroupId = maxId[0] ? maxId[0].maxId : 0;
         });
       event.entity.groupId = String(++maxGroupId);
     }

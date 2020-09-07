@@ -16,7 +16,7 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   }
 
   async allRelatedPhrases(): Promise<RelatedPhrases[]> {
-    let relatedPhrases = await this.find({ loadRelationIds: true });
+    let relatedPhrases = await this.find();
     return relatedPhrases;
   }
 
@@ -69,19 +69,23 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   }
 
   async findRelatedMusicIdsByPhrase(phrase: string): Promise<string[]> {
-    let relatedRels: RelatedPhrases[] = [];
-    let rel = await this.find({
-      where: { phrase: Like(`%${phrase.trim()}%`) },
-    });
-    for (let key of rel) {
-      relatedRels.push(
-        await this.findOne({
-          where: { groupId: key.groupId },
-        })
-      );
-    }
+    const result = await this.createQueryBuilder()
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select("relatedPhrases.groupId")
+          .from(RelatedPhrases, "relatedPhrases")
+          .where("MATCH(phrase) AGAINST (:phrase IN BOOLEAN MODE)", {
+            phrase: phrase.trim(),
+          })
+          .getQuery();
+        return "groupId IN " + subQuery;
+      })
+      .orderBy("groupId")
+      .getMany();
+
     let musicIds: string[] = [];
-    for (let key of relatedRels) {
+    for (let key of result) {
       musicIds.push(...key.relatedMusicIds);
     }
     return [...new Set(musicIds)];

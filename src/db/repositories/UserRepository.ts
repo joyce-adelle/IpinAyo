@@ -17,7 +17,7 @@ export class UserRepository extends Repository<User> {
 
   //testing purposes
   async allUsers(): Promise<User[]> {
-    let users = await this.find({ loadRelationIds: true });
+    let users = await this.find();
     return users;
   }
 
@@ -36,7 +36,7 @@ export class UserRepository extends Repository<User> {
       let userDet = await this.findUserDetailsById(id);
       Object.assign(userDet, user);
       let updatedUser = await this.save(userDet);
-      return await this.findUserDetailsById(updatedUser.id);
+      return updatedUser;
     } catch (error) {
       throw new Error(error.message);
     }

@@ -14,19 +14,19 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async allMusic(): Promise<Music[]> {
-    let music = await this.find({where: {isVerified: true}});
+    let music = await this.find({ where: { isVerified: true } });
     return music;
   }
 
   async allUnverifiedMusicDetails(): Promise<Music[]> {
-    let music = await this.find({where: {isVerified: false}});
+    let music = await this.find({ where: { isVerified: false } });
     return music;
   }
 
   async findMusicDetailsById(id: string): Promise<Music> {
     let music = await this.findOne({
       where: { id: id },
-      relations: ["categories", "relatedPhrases", "uploadedBy"]
+      relations: ["categories", "music", "uploadedBy"],
     });
     if (!MusicRepository.isMusic(music)) {
       throw new Error(
@@ -48,13 +48,18 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async findRelatedMusicIdsByPhrase(phrase: string): Promise<string[]> {
-    let relatedRels: Music[] = [];
-    let rel = await this.find({
-      where: { title: Like(`%${phrase.trim()}%`) },
-    });
-    
+    const result = await this.createQueryBuilder()
+      .select()
+      .where(
+        "MATCH(title, composers, arrangers) AGAINST (:phrase IN BOOLEAN MODE)",
+        {
+          phrase: phrase.trim(),
+        }
+      )
+      .getMany();
+
     let musicIds: string[] = [];
-    for (let key of rel) {
+    for (let key of result) {
       musicIds.push(...key.id);
     }
     return [...new Set(musicIds)];
@@ -72,9 +77,6 @@ export class MusicRepository extends Repository<Music> {
   }
 
   static isMusic(music: any): music is Music {
-    return (
-      typeof music === "object" &&
-      typeof music.title === "string" 
-    );
+    return typeof music === "object" && typeof music.title === "string";
   }
 }

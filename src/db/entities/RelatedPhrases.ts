@@ -9,17 +9,15 @@ import {
 import { Music } from "./Music";
 
 @Entity()
-@Index("IDX_FULLTEXTPHRASE",{ synchronize: false })
-@Index("IDX_3a385ee566ec326b73e79f8025",{ synchronize: false })
+@Index("IDX_FULLTEXTPHRASE", { synchronize: false })
 export class RelatedPhrases {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Column()
-  @Index({ fulltext: true, unique: true})
+  @Column({ unique: true })
   phrase: string;
 
-  @Column({type: 'int'})
+  @Column({ type: "int" })
   groupId: string;
 
   @ManyToMany((type) => Music, (relatedMusic) => relatedMusic.relatedPhrases)

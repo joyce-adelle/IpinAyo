@@ -15,6 +15,7 @@ import { Category } from "./Category";
 import { RelatedPhrases } from "./RelatedPhrases";
 
 @Entity()
+@Index("IDX_691e99699b0d2dfaaa7a6a83c5", { synchronize: false })
 export class Music {
   @PrimaryGeneratedColumn()
   id: string;
@@ -31,7 +32,6 @@ export class Music {
   audio: string;
 
   @Column()
-  @Index({fulltext: true})
   title: string;
 
   @Column({ type: "text" })
@@ -40,7 +40,6 @@ export class Music {
   @Column({
     nullable: true,
   })
-  @Index({fulltext: true})
   composers: string;
 
   @Column({ type: "char", nullable: true, length: 4 })
@@ -49,7 +48,6 @@ export class Music {
   @Column({
     nullable: true,
   })
-  @Index({fulltext: true})
   arrangers: string;
 
   @Column({ type: "char", nullable: true, length: 4 })

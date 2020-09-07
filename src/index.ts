@@ -17,7 +17,7 @@ async function main() {
   // const server = new ApolloServer({ schema });
   // await server.listen(4000);
   console.log("Server has started!");
-  let c = await rep.allUsers();
+  let c = await rep.userDownloadedMusic('1', '2')
   console.log(c);
 }
 

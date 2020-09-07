@@ -1,10 +1,12 @@
-import { EntityRepository, Repository } from "typeorm";
+import { EntityRepository, Repository, getRepository, getCustomRepository } from "typeorm";
 import * as util from "util";
 import { User } from "../entities/User";
 import { CreateUser } from "../inputInterfaces/CreateUser";
 import { UpdateUser } from "../inputInterfaces/UpdateUser";
 import { createHmac } from "crypto";
 import { LoginUser } from "../inputInterfaces/LoginUser";
+import { Music } from '../entities/Music';
+import { MusicRepository } from './MusicRepository';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -42,7 +44,25 @@ export class UserRepository extends Repository<User> {
     }
   }
 
-  async findByEmailAndPassword(loginUser: LoginUser): Promise<User> {
+  async userDownloadedMusic(userId: string, musicId: string): Promise<User> {
+    try {
+      let userDet = await this.findOne({
+        where: { id: userId },
+        relations: ["downloads"] 
+      });
+      if (!UserRepository.isUser(userDet)) {
+        throw new Error(`User id ${util.inspect(userId)} did not retrieve a User`);
+      }
+      let music = await getCustomRepository(MusicRepository).findMusicById(musicId)
+      userDet.downloads.push(music);
+      let updatedUser = await this.save(userDet);
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async findUserByEmailAndPassword(loginUser: LoginUser): Promise<User> {
     let user = await this.findOne({
       where: {
         email: loginUser.email,

@@ -7,6 +7,7 @@ import {
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
@@ -30,6 +31,7 @@ export class Music {
   audio: string;
 
   @Column()
+  @Index({fulltext: true})
   title: string;
 
   @Column({ type: "text" })
@@ -38,6 +40,7 @@ export class Music {
   @Column({
     nullable: true,
   })
+  @Index({fulltext: true})
   composers: string;
 
   @Column({ type: "char", nullable: true, length: 4 })
@@ -46,6 +49,7 @@ export class Music {
   @Column({
     nullable: true,
   })
+  @Index({fulltext: true})
   arrangers: string;
 
   @Column({ type: "char", nullable: true, length: 4 })

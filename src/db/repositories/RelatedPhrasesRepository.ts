@@ -1,4 +1,4 @@
-import { EntityRepository, Repository, Like } from "typeorm";
+import { EntityRepository, Repository} from "typeorm";
 import * as util from "util";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
 import { CreateRelatedPhrases } from "../inputInterfaces/CreateRelatedPhrases";
@@ -68,15 +68,15 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     }
   }
 
-  async findRelatedMusicIdsByPhrase(phrase: string): Promise<string[]> {
+  async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
     const result = await this.createQueryBuilder()
       .where((qb) => {
         const subQuery = qb
           .subQuery()
           .select("relatedPhrases.groupId")
           .from(RelatedPhrases, "relatedPhrases")
-          .where("MATCH(phrase) AGAINST (:phrase IN BOOLEAN MODE)", {
-            phrase: phrase.trim(),
+          .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
+            query: query.trim(),
           })
           .getQuery();
         return "groupId IN " + subQuery;

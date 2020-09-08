@@ -65,6 +65,9 @@ export class Music {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column()
+  numberOfDownloads: number;
+
   @ManyToOne((type) => User, (user) => user.uploads)
   uploadedBy: User;
 
@@ -104,4 +107,8 @@ export class Music {
 
   @ManyToOne((type) => User)
   verifiedBy: User;
+
+  scoreFile: File;
+
+  audioFile: File;
 }

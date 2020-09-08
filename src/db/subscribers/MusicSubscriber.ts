@@ -1,12 +1,13 @@
 import {
-  Connection,
   EntitySubscriberInterface,
   EventSubscriber,
   InsertEvent,
   UpdateEvent,
+  RemoveEvent,
 } from "typeorm";
 
 import { Music } from "../entities/Music";
+import * as fs from "fs";
 
 @EventSubscriber()
 export class MusicSubscriber implements EntitySubscriberInterface<Music> {
@@ -18,11 +19,34 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
     if (event.entity.isVerified) {
       event.entity.verifiedAt = new Date();
     }
+    var oldpath = event.entity.scoreFile.name;
+      var newpath = __dirname + event.entity.scoreFile.name;
+      fs.rename(oldpath, newpath, function (err) {
+        if (err) throw err;
+        console.log('File uploaded and moved!');
+      });
   }
 
   beforeUpdate(event: UpdateEvent<Music>) {
     if (event.entity.isVerified && !event.databaseEntity.isVerified) {
       event.entity.verifiedAt = new Date();
     }
+  }
+
+  afterRemove(event: RemoveEvent<Music>){
+    fs.unlink(event.entity.score, function (err) {
+      if (err) throw err;
+      console.log('File deleted!');
+    });
+    if(event.entity.audio){
+      fs.unlink(event.entity.audio, function (err) {
+        if (err) throw err;
+        console.log('File deleted!');
+      });
+    }
+  }
+
+  afterLoad(entity: Music){
+    
   }
 }

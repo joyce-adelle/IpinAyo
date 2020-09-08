@@ -1,11 +1,10 @@
-import { EntityRepository, Repository, getRepository, getCustomRepository } from "typeorm";
+import { EntityRepository, Repository, getCustomRepository } from "typeorm";
 import * as util from "util";
 import { User } from "../entities/User";
 import { CreateUser } from "../inputInterfaces/CreateUser";
 import { UpdateUser } from "../inputInterfaces/UpdateUser";
 import { createHmac } from "crypto";
 import { LoginUser } from "../inputInterfaces/LoginUser";
-import { Music } from '../entities/Music';
 import { MusicRepository } from './MusicRepository';
 
 @EntityRepository(User)
@@ -23,7 +22,7 @@ export class UserRepository extends Repository<User> {
     return users;
   }
 
-  async findUserDetailsById(id: string): Promise<User> {
+  async findUserById(id: string): Promise<User> {
     let user = await this.findOne({
       where: { id: id },
     });
@@ -35,7 +34,7 @@ export class UserRepository extends Repository<User> {
 
   async updateUser(id: string, user: UpdateUser): Promise<User> {
     try {
-      let userDet = await this.findUserDetailsById(id);
+      let userDet = await this.findUserById(id);
       Object.assign(userDet, user);
       let updatedUser = await this.save(userDet);
       return updatedUser;
@@ -55,7 +54,9 @@ export class UserRepository extends Repository<User> {
       }
       let music = await getCustomRepository(MusicRepository).findMusicById(musicId)
       userDet.downloads.push(music);
+      music.numberOfDownloads = ++music.numberOfDownloads;
       let updatedUser = await this.save(userDet);
+      await getCustomRepository(MusicRepository).save(music);
       return updatedUser;
     } catch (error) {
       throw new Error(error.message);

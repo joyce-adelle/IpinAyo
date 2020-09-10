@@ -19,12 +19,12 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
     if (event.entity.isVerified) {
       event.entity.verifiedAt = new Date();
     }
-    var oldpath = event.entity.scoreFile.name;
-      var newpath = __dirname + event.entity.scoreFile.name;
-      fs.rename(oldpath, newpath, function (err) {
-        if (err) throw err;
-        console.log('File uploaded and moved!');
-      });
+    // var oldpath = event.entity.scoreFile.name;
+    //   var newpath = __dirname + event.entity.scoreFile.name;
+    //   fs.rename(oldpath, newpath, function (err) {
+    //     if (err) throw err;
+    //     console.log('File uploaded and moved!');
+    //   });
   }
 
   beforeUpdate(event: UpdateEvent<Music>) {

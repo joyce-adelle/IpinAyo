@@ -73,6 +73,8 @@ async function main() {
 
     let user1 = new User();
     user1.username = "user1";
+    user1.firstName = "User1";
+    user1.lastName = "Happy1";
     user1.email = "user1@mail.com";
     user1.password = "user1secret";
     user1.isComposer = false;
@@ -82,6 +84,8 @@ async function main() {
 
     let user10 = new User();
     user10.username = "user10";
+    user10.firstName = "User10";
+    user10.lastName = "Happy10";
     user10.email = "user10@mail.com";
     user10.password = "user10secret";
     user10.role = UserRole.Superadmin;

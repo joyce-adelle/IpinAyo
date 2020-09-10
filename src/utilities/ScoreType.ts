@@ -1,3 +1,5 @@
+import { registerEnumType } from 'type-graphql';
+
 export enum ScoreType {
   Full = "full",
   Miniature = "miniature",
@@ -13,3 +15,8 @@ export enum ScoreType {
   Tablature = "tablature",
   LeadSheetAndAccompaniment = " lead sheet and accompaniment",
 }
+
+registerEnumType(ScoreType, {
+  name: "ScoreType",
+  description: "type of music score",
+});

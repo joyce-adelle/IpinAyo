@@ -65,7 +65,7 @@ export class Music {
   @Column({ default: false })
   isVerified: boolean;
 
-  @Column()
+  @Column({type: "bigint" ,default: 0})
   numberOfDownloads: number;
 
   @ManyToOne((type) => User, (user) => user.uploads)

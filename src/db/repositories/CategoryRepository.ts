@@ -16,13 +16,8 @@ export class CategoryRepository extends TreeRepository<Category> {
       let newCategory = await this.save(categoryDet);
       return newCategory;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
-  }
-
-  async allCategories(): Promise<Category[]> {
-    let categories = await this.findTrees();
-    return categories;
   }
 
   async findCategoryById(id: string): Promise<Category> {
@@ -47,7 +42,7 @@ export class CategoryRepository extends TreeRepository<Category> {
       }
       return [...new Set(musicIds)];
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
@@ -61,8 +56,8 @@ export class CategoryRepository extends TreeRepository<Category> {
       if (category.name) {
         categoryDet.name = category.name;
       }
-      if (category.parentId) {
-        if (category.parentId.toLowerCase() === "null") {
+      if (category.parentId || category.parentId === null) {
+        if (category.parentId === null) {
           categoryDet.parent = null;
         } else {
           categoryDet.parent = await this.findCategoryById(category.parentId);
@@ -73,21 +68,21 @@ export class CategoryRepository extends TreeRepository<Category> {
           JOIN category_closure AS d ON a.id_descendant = d.id_descendant
           LEFT JOIN category_closure AS x
           ON x.id_ancestor = d.id_ancestor AND x.id_descendant = a.id_ancestor
-          WHERE d.id_ancestor = ${id} AND x.id_ancestor IS NULL`
+          WHERE d.id_ancestor = ? AND x.id_ancestor IS NULL`, [id]
         );
 
         await getConnection().query(
           `INSERT INTO category_closure (id_ancestor, id_descendant)
           SELECT supertree.id_ancestor, subtree.id_descendant
           FROM category_closure AS supertree JOIN category_closure AS subtree
-          WHERE subtree.id_ancestor = ${id}
-          AND supertree.id_descendant = ${category.parentId}`
+          WHERE subtree.id_ancestor = ?
+          AND supertree.id_descendant = ?`, [id, category.parentId]
         );
       }
       let updatedCategory = await this.save(categoryDet);
       return updatedCategory;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 

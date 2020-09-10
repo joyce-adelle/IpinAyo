@@ -1,4 +1,4 @@
-import { EntityRepository, Repository} from "typeorm";
+import { EntityRepository, Repository } from "typeorm";
 import * as util from "util";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
 import { CreateRelatedPhrases } from "../inputInterfaces/CreateRelatedPhrases";
@@ -13,11 +13,6 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     Object.assign(relatedPhrasesDet, relatedPhrases);
     let newRelatedPhrases = await this.save(relatedPhrasesDet);
     return newRelatedPhrases;
-  }
-
-  async allRelatedPhrases(): Promise<RelatedPhrases[]> {
-    let relatedPhrases = await this.find();
-    return relatedPhrases;
   }
 
   async findRelatedPhraseDetailsById(id: string): Promise<RelatedPhrases> {
@@ -101,7 +96,20 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
       let updatedRelatedPhrases = await this.save(relatedPhrasesDet);
       return updatedRelatedPhrases;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
+    }
+  }
+
+  async deleteRelatedPhrase(id: string): Promise<boolean> {
+    try {
+      let phrase = await this.findRelatedPhraseDetailsById(id);
+      if (phrase.relatedMusicIds.length === 0) {
+        await this.delete(id);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -110,8 +118,7 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   ): relatedPhrases is RelatedPhrases {
     return (
       typeof relatedPhrases === "object" &&
-      typeof relatedPhrases.phrase === "string" &&
-      typeof relatedPhrases.groupId === "string"
+      typeof relatedPhrases.phrase === "string"
     );
   }
 }

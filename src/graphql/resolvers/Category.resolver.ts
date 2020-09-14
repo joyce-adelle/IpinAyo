@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Arg } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
 import { getCustomRepository } from "typeorm";
 import { CategoryRepository } from "../../db/repositories/CategoryRepository";
 import { Category } from "../../db/entities/Category";
@@ -21,7 +21,7 @@ export class CategoryResolver {
   }
 
   @Query(() => Category)
-  category(@Arg("id") id: string) {
+  category(@Arg("id", () => ID) id: string) {
     return this.categoryRepository.findCategoryById(id);
   }
 
@@ -32,7 +32,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category)
-  async updateCategory(@Arg("id") id: string, @Arg("data") data: UpdateCategoryInput) {
+  async updateCategory(@Arg("id", () => ID) id: string, @Arg("data") data: UpdateCategoryInput) {
     let category = await this.categoryRepository.updateCategory(id, data);
     return category;
   }

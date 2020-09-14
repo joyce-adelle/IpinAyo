@@ -1,11 +1,10 @@
-import { Resolver, Query, Mutation, Arg } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
 import { getCustomRepository } from "typeorm";
 import { UserRepository } from "../../db/repositories/UserRepository";
 import { User } from "../../db/entities/User";
 import { CreateUserInput } from "../inputs/CreateUser.input";
 import { UpdateUserInput } from "../inputs/UpdateUser.input";
 import { LoginUserArguments } from "../inputs/LoginUser.input";
-import { UserRole } from "../../utilities/UserRoles";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
 import { DownloadMusicInput } from "../inputs/DownloadMusic.input";
 
@@ -19,7 +18,7 @@ export class UserResolver {
   }
 
   @Query(() => User)
-  user(@Arg("id") id: string) {
+  user(@Arg("id", () => ID) id: string) {
     return this.userRepository.findUserById(id);
   }
 
@@ -34,17 +33,23 @@ export class UserResolver {
   }
 
   @Mutation(() => User)
-  async updateUser(@Arg("id") id: string, @Arg("data") data: UpdateUserInput) {
+  async updateUser(@Arg("id", () => ID) id: string, @Arg("data") data: UpdateUserInput) {
     return await this.userRepository.updateUser(id, data);
   }
 
   @Mutation(() => Boolean)
   async changeUserRole(@Arg("details") details: ChangeUserRoleInput) {
-    return await this.userRepository.changeUserRole(details.userId, details.role);
+    return await this.userRepository.changeUserRole(
+      details.userId,
+      details.role
+    );
   }
 
   @Mutation(() => Boolean)
-  async downloadMusic(@Arg("details") { userId, musicId }: DownloadMusicInput) {
-    return await this.userRepository.userDownloadedMusic(userId, musicId);
+  async downloadMusic(@Arg("details") details: DownloadMusicInput) {
+    return await this.userRepository.userDownloadedMusic(
+      details.userId,
+      details.musicId
+    );
   }
 }

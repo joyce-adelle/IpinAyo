@@ -1,12 +1,12 @@
-import { InputType, Field } from "type-graphql";
-import { IsString, IsEnum, IsDefined } from "class-validator";
+import { InputType, Field, ID } from "type-graphql";
+import { IsEnum, IsDefined, Length } from "class-validator";
 import { IsId } from "../validations/Id.validation";
-import { UserRole } from '../../utilities/UserRoles';
+import { UserRole } from "../../utilities/UserRoles";
 
 @InputType()
 export class ChangeUserRoleInput {
-  @Field(() => String)
-  @IsString()
+  @Field(() => ID)
+  @Length(1)
   @IsId({ message: "$value is not a valid user id" })
   @IsDefined()
   userId: string;

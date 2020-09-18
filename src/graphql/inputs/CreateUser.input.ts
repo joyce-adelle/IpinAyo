@@ -13,7 +13,6 @@ import {
   IsOptional,
   ArrayNotEmpty,
   ArrayMaxSize,
-  IsNotEmpty,
   IsDefined,
 } from "class-validator";
 import { IsUsernameAlreadyExist } from "../validations/Username.validation";
@@ -52,7 +51,7 @@ export class CreateUserInput implements CreateUser {
   role?: UserRole;
 
   @Field(() => [CompositionType], { nullable: true })
-  @ValidateIf(user => user.isComposer == true)
+  @ValidateIf((user) => user.isComposer == true)
   @IsDefined()
   @IsEnum(CompositionType, { each: true })
   @ArrayUnique()

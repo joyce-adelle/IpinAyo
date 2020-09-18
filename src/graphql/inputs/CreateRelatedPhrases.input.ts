@@ -1,6 +1,6 @@
 import { CreateRelatedPhrases } from "../../db/inputInterfaces/CreateRelatedPhrases";
-import { InputType, Field } from "type-graphql";
-import { MinLength, IsString, IsOptional } from "class-validator";
+import { InputType, Field, ID } from "type-graphql";
+import { MinLength, IsString, IsOptional, Length } from "class-validator";
 import { IsId } from "../validations/Id.validation";
 
 @InputType()
@@ -10,7 +10,8 @@ export class CreateRelatedPhrasesInput implements CreateRelatedPhrases {
   @MinLength(3)
   phrase: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => ID, { nullable: true })
+  @Length(1)
   @IsOptional()
   @IsId({ message: "$value is not a valid groupId" })
   groupId?: string;

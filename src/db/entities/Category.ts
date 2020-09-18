@@ -37,7 +37,7 @@ export class Category {
   @ManyToMany((type) => Music, (music) => music.categories)
   relatedMusic: Music[];
 
-  @Field(() => [String])
+  @Field(() => [ID])
   @RelationId((relatedMusic: Category) => relatedMusic.relatedMusic)
   relatedMusicIds: string[];
 }

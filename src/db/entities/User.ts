@@ -62,17 +62,9 @@ export class User {
   @OneToMany((type) => Music, (upload) => upload.uploadedBy)
   uploads: Music[];
 
-  @Field(() => [String])
-  @RelationId((uploadedMusic: User) => uploadedMusic.uploads)
-  uploadedMusicIds: string[];
-
   @ManyToMany((type) => Music)
   @JoinTable()
   downloads: Music[];
-
-  @Field(() => [String])
-  @RelationId((downloadedMusic: User) => downloadedMusic.downloads)
-  downloadedMusicIds: string[];
 
   @Field(() => Date)
   @CreateDateColumn({

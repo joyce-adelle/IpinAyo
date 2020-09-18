@@ -7,7 +7,7 @@ import {
   Index,
 } from "typeorm";
 import { Music } from "./Music";
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, ID } from 'type-graphql';
 @ObjectType()
 @Entity()
 @Index("IDX_FULLTEXTPHRASE", { synchronize: false })
@@ -27,7 +27,7 @@ export class RelatedPhrases {
   @ManyToMany((type) => Music, (relatedMusic) => relatedMusic.relatedPhrases)
   relatedMusic: Music[];
 
-  @Field(() => [String])
+  @Field(() => [ID])
   @RelationId((relatedMusic: RelatedPhrases) => relatedMusic.relatedMusic)
   relatedMusicIds: string[];
 }

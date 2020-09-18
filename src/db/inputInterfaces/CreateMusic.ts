@@ -1,7 +1,8 @@
 import { ScoreType } from "../../utilities/ScoreType";
 
 export interface CreateMusic {
-  scoreFile: File;
+  scorePath: string;
+  scoreFilename: string,
   title: string;
   description: string;
   scoreType: ScoreType;
@@ -9,7 +10,8 @@ export interface CreateMusic {
   relatedPhrasesIds: string[];
   categoryIds: string[];
   uploadedById: string;
-  audioFile?: File;
+  audioPath?: string;
+  audioFilename?: string,
   composers?: string;
   yearOfComposition?: string;
   arrangers?: string;

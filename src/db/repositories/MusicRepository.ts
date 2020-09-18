@@ -3,24 +3,27 @@ import * as util from "util";
 import { Music } from "../entities/Music";
 import { CreateMusic } from "../inputInterfaces/CreateMusic";
 import { UpdateMusic } from "../inputInterfaces/UpdateMusic";
-import { MusicDetails } from "../subEntities/MusicDetails";
 import { UserRepository } from "./UserRepository";
 import { UserRole } from "../../utilities/UserRoles";
 import { CategoryRepository } from "./CategoryRepository";
 import { RelatedPhrasesRepository } from "./RelatedPhrasesRepository";
+import { access } from "fs";
+import { F_OK } from "constants";
 
 @EntityRepository(Music)
 export class MusicRepository extends Repository<Music> {
-  async createAndSave(music: CreateMusic): Promise<MusicDetails> {
+  async createAndSave(music: CreateMusic): Promise<Music> {
     try {
       let musicDet = new Music();
       Object.assign(musicDet, music);
 
-      let scoreMimeType = musicDet.scoreFile.type;
-      if (scoreMimeType !=='application/pdf') {
-        throw new Error("pdf files only");
-      }
-      musicDet.score = musicDet.scoreFile.name;
+      access(music.scorePath, F_OK, (err) => {
+        if (err) {
+          throw new Error("Score does not exist");
+        } else {
+          musicDet.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
+        }
+      });
 
       let uploadedBy = await getCustomRepository(UserRepository).findUserById(
         music.uploadedById
@@ -41,11 +44,14 @@ export class MusicRepository extends Repository<Music> {
         musicDet.isVerified = true;
         musicDet.verifiedBy = uploadedBy;
       }
-      if (musicDet.audioFile) {
-        let audioMimeType = musicDet.audioFile.type;
-        if (audioMimeType.match('audio.*') != null) {
-          musicDet.audio = musicDet.audioFile.name;
-        }
+      if (music.audioPath) {
+        access(music.audioPath, F_OK, (err) => {
+          if (err) {
+            musicDet.audio = null;
+          } else {
+            musicDet.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
+          }
+        });
       }
 
       let newMusic = await this.save(musicDet);
@@ -56,22 +62,25 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async allMusic(): Promise<Music[]> {
-    let music = await this.find({ where: { isVerified: true } });
-    return music;
-  }
-
-  async allUnverifiedMusicDetails(): Promise<MusicDetails[]> {
     let music = await this.find({
-      where: { isVerified: false },
-      relations: ["categories", "music", "uploadedBy"],
+      where: { isVerified: true },
+      relations: ["categories"],
     });
     return music;
   }
 
-  async findMusicDetailsById(id: string): Promise<MusicDetails> {
+  async allUnverifiedMusicDetails(): Promise<Music[]> {
+    let music = await this.find({
+      where: { isVerified: false },
+      relations: ["categories"],
+    });
+    return music;
+  }
+
+  async findMusicDetailsById(id: string): Promise<Music> {
     let music = await this.findOne({
       where: { id: id },
-      relations: ["categories", "music", "uploadedBy"],
+      relations: ["categories"],
     });
     if (!MusicRepository.isMusic(music)) {
       throw new Error(`Music id ${util.inspect(id)} did not retrieve a Music`);
@@ -80,16 +89,14 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async findMusicById(id: string): Promise<Music> {
-    let obj = await this.findOne({ where: { id: id } });
+    let obj = await this.findOne({
+      where: { id: id },
+      relations: ["categories"],
+    });
 
     if (!MusicRepository.isMusic(obj)) {
       throw new Error(`Music id ${util.inspect(id)} did not retrieve a Music`);
     }
-    return obj;
-  }
-
-  async findMusicByIds(musicIds: string[]): Promise<Music[]> {
-    let obj = await this.findByIds(musicIds);
     return obj;
   }
 
@@ -123,6 +130,10 @@ export class MusicRepository extends Repository<Music> {
   }
 
   static isMusic(music: any): music is Music {
-    return typeof music === "object" && typeof music.title === "string";
+    return (
+      typeof music === "object" &&
+      typeof music.title === "string" &&
+      typeof music.score === "string"
+    );
   }
 }

@@ -7,11 +7,12 @@ import { createHmac } from "crypto";
 import { LoginUser } from "../inputInterfaces/LoginUser";
 import { MusicRepository } from "./MusicRepository";
 import { UserRole } from "../../utilities/UserRoles";
-import { InjectRepository } from 'typeorm-typedi-extensions';
+import { InjectRepository } from "typeorm-typedi-extensions";
+import { MyDbError } from "../dbUtils/MyDbError";
+import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
-
   @InjectRepository()
   private readonly musicRepository: MusicRepository;
 
@@ -40,38 +41,29 @@ export class UserRepository extends Repository<User> {
   }
 
   async updateUser(id: string, user: UpdateUser): Promise<User> {
-    try {
-      let userDet = await this.findUserById(id);
-      Object.assign(userDet, user);
-      if (userDet.isComposer === false) userDet.typeOfCompositions = [];
-      return this.save(userDet);
-    } catch (error) {
-      throw error;
-    }
+    let userDet = await this.findUserById(id);
+    if (!UserRepository.isUser(userDet)) throw new UserNotRetrieved(id);
+
+    Object.assign(userDet, user);
+    if (userDet.isComposer === false) userDet.typeOfCompositions = [];
+    return this.save(userDet);
   }
 
   async userDownloadedMusic(userId: string, musicId: string): Promise<boolean> {
-    try {
-      let userDet = await this.findOne({
-        where: { id: userId },
-        relations: ["downloads"],
-      });
-      if (!UserRepository.isUser(userDet)) {
-        throw new Error(
-          `User id ${util.inspect(userId)} did not retrieve a User`
-        );
-      }
-      let music = await this.musicRepository.findMusicById(
-        musicId
-      );
-      userDet.downloads.push(music);
-      music.numberOfDownloads = ++music.numberOfDownloads;
-      let downloaded = await this.save(userDet);
-      await this.musicRepository.save(music);
-      return downloaded ? true : false;
-    } catch (error) {
-      throw error;
-    }
+    let userDet = await this.findOne({
+      where: { id: userId },
+      relations: ["downloads"],
+    });
+    if (!UserRepository.isUser(userDet)) throw new UserNotRetrieved(userId);
+
+    let music = await this.musicRepository.findMusicById(musicId);
+    if (!music) throw new MusicNotRetrieved(musicId);
+
+    userDet.downloads.push(music);
+    music.numberOfDownloads = ++music.numberOfDownloads;
+    let downloaded = await this.save(userDet);
+    await this.musicRepository.save(music);
+    return downloaded ? true : false;
   }
 
   async findUserByEmailAndPassword(loginUser: LoginUser): Promise<User> {
@@ -84,19 +76,12 @@ export class UserRepository extends Repository<User> {
   }
 
   async changeUserRole(userId: string, newRole: UserRole): Promise<boolean> {
-    try {
-      let user = await this.findUserById(userId);
-      if (!UserRepository.isUser(user)) {
-        throw new Error(
-          `User id ${util.inspect(userId)} did not retrieve a User`
-        );
-      }
-      user.role = newRole;
-      let saved = await this.save(user);
-      return saved ? true : false;
-    } catch (error) {
-      throw error;
-    }
+    let user = await this.findUserById(userId);
+    if (!UserRepository.isUser(user)) throw new UserNotRetrieved(userId);
+
+    user.role = newRole;
+    let saved = await this.save(user);
+    return saved ? true : false;
   }
 
   static isUser(user: any): user is User {

@@ -4,7 +4,7 @@ import {
   LoginPayload,
   LoginType,
   SignUpPayload,
-} from "../../services/serviceUtils/payloads";
+} from "../../services/serviceUtils/Payloads";
 import { MyError } from "../../services/serviceUtils/MyError";
 import { AutheticationService } from "../../services/AutheticationService";
 import { UserError } from "../../utilities/genericTypes";

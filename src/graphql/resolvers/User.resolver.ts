@@ -6,7 +6,7 @@ import { UserService } from "../../services/UserService";
 import { Context } from "../../context/context.interface";
 import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
-import { BooleanPayload, UserPayload } from "../../services/serviceUtils/payloads";
+import { BooleanPayload, UserPayload } from "../../services/serviceUtils/Payloads";
 
 @Resolver()
 export class UserResolver {

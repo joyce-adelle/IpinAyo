@@ -1,40 +1,91 @@
-import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
-import { getCustomRepository } from "typeorm";
-import { RelatedPhrasesRepository } from "../../db/repositories/RelatedPhrasesRepository";
-import { RelatedPhrases } from "../../db/entities/RelatedPhrases";
+import { Resolver, Query, Mutation, Arg, ID, Ctx } from "type-graphql";
 import { CreateRelatedPhrasesInput } from "../inputs/CreateRelatedPhrases.input";
 import { UpdateRelatedPhrasesInput } from "../inputs/UpdateRelatedPhrases.input";
+import { Inject } from "typedi";
+import { RelatedPhrasesService } from "../../services/RelatedPhrasesService";
+import { Context } from "../../context/context.interface";
+import { MyError } from "../../services/serviceUtils/MyError";
+import { UserError } from "../../utilities/genericTypes";
+import {
+  BooleanPayload,
+  RelatedPhrasePayload,
+  RelatedPhrasesPayload,
+} from "../../services/serviceUtils/Payloads";
 
 @Resolver()
 export class RelatedPhrasesResolver {
-  private relatedPhrasesRepository = getCustomRepository(RelatedPhrasesRepository);
+  @Inject()
+  private readonly relatedPhrasesService: RelatedPhrasesService;
 
-  @Query(() => [RelatedPhrases])
+  @Query(() => RelatedPhrasesPayload)
   relatedPhrases() {
-    return this.relatedPhrasesRepository.find();
+      return this.relatedPhrasesService.getAllRelatedPhrases();
   }
 
-  @Query(() => RelatedPhrases)
-  relatedPhrase(@Arg("id", () => ID) id: string) {
-    return this.relatedPhrasesRepository.findRelatedPhraseDetailsById(id);
+  @Query(() => RelatedPhrasePayload)
+  async relatedPhrase(@Arg("id", () => ID) id: string) {
+    try {
+      return await this.relatedPhrasesService.getRelatedPhrase(id);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
-  @Mutation(() => RelatedPhrases)
-  async createRelatedPhrases(@Arg("data") data: CreateRelatedPhrasesInput) {
-    let relatedPhrases = await this.relatedPhrasesRepository.createAndSave(data);
-    return relatedPhrases;
+  @Mutation(() => RelatedPhrasePayload)
+  async createRelatedPhrases(
+    @Ctx() { user }: Context,
+    @Arg("data") data: CreateRelatedPhrasesInput
+  ) {
+    try {
+      let relatedPhrase = await this.relatedPhrasesService.createRelatedPhrase(
+        user,
+        data
+      );
+      return relatedPhrase;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
-  @Mutation(() => RelatedPhrases)
-  async updateRelatedPhrases(@Arg("id", () => ID) id: string, @Arg("data") data: UpdateRelatedPhrasesInput) {
-    let relatedPhrases = await this.relatedPhrasesRepository.updateRelatedPhrases(id, data);
-    return relatedPhrases;
+  @Mutation(() => RelatedPhrasePayload)
+  async updateRelatedPhrases(
+    @Ctx() { user }: Context,
+    @Arg("id", () => ID) id: string,
+    @Arg("data") data: UpdateRelatedPhrasesInput
+  ) {
+    try {
+      let relatedPhrases = await this.relatedPhrasesService.updateRelatedPhrases(
+        user,
+        id,
+        data
+      );
+      return relatedPhrases;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
-  @Mutation(() => Boolean)
-  async deleteRelatedPhrase(@Arg("id", () => ID) id: string) {
-    const del = await this.relatedPhrasesRepository.deleteRelatedPhrase(id);
-    if (!del) throw new Error("Phrase cannot be deleted!");
-    return del;
+  @Mutation(() => BooleanPayload)
+  async deleteRelatedPhrase(
+    @Ctx() { user }: Context,
+    @Arg("id", () => ID) id: string
+  ) {
+    try {
+      const del = await this.relatedPhrasesService.deleteRelatedPhrase(
+        user,
+        id
+      );
+      return del;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 }

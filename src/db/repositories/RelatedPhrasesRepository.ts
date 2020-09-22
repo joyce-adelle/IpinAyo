@@ -1,5 +1,7 @@
 import { EntityRepository, Repository } from "typeorm";
 import * as util from "util";
+import { RelatedPhraseNotRetrieved } from "../dbUtils/DbErrors";
+import { MyDbError } from "../dbUtils/MyDbError";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
 import { CreateRelatedPhrases } from "../inputInterfaces/CreateRelatedPhrases";
 import { UpdateRelatedPhrases } from "../inputInterfaces/UpdateRelatedPhrases";
@@ -27,13 +29,9 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   async findRelatedPhrasesByPhrase(phrase: string): Promise<RelatedPhrases[]> {
     let obj = await this.findOneByPhrase(phrase);
 
-    if (!RelatedPhrasesRepository.isRelatedPhrases(obj)) {
-      throw new Error(
-        `RelatedPhrases' phrase ${util.inspect(
-          phrase
-        )} did not retrieve a RelatedPhrase`
-      );
-    }
+    if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
+      throw new RelatedPhraseNotRetrieved(phrase);
+
     return this.find({
       where: { groupId: obj.groupId },
     });
@@ -42,13 +40,9 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   async findRelatedPhrasesById(id: string): Promise<RelatedPhrases[]> {
     let obj = await this.findRelatedPhraseDetailsById(id);
 
-    if (!RelatedPhrasesRepository.isRelatedPhrases(obj)) {
-      throw new Error(
-        `RelatedPhrases' id ${util.inspect(
-          id
-        )} did not retrieve a RelatedPhrase`
-      );
-    }
+    if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
+      throw new RelatedPhraseNotRetrieved(id);
+
     return this.find({
       where: { groupId: obj.groupId },
     });
@@ -82,26 +76,18 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     relatedPhrases: UpdateRelatedPhrases
   ): Promise<RelatedPhrases> {
     let relatedPhrasesDet = await this.findRelatedPhraseDetailsById(id);
-    if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrasesDet)) {
-      throw new Error(
-        `RelatedPhrases' id ${util.inspect(
-          id
-        )} did not retrieve a RelatedPhrase`
-      );
-    }
+    if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrasesDet))
+      throw new RelatedPhraseNotRetrieved(id);
+
     Object.assign(relatedPhrasesDet, relatedPhrases);
     return this.save(relatedPhrasesDet);
   }
 
   async deleteRelatedPhrase(id: string): Promise<boolean> {
     let phrase = await this.findRelatedPhraseDetailsById(id);
-    if (!RelatedPhrasesRepository.isRelatedPhrases(phrase)) {
-      throw new Error(
-        `RelatedPhrases' id ${util.inspect(
-          id
-        )} did not retrieve a RelatedPhrase`
-      );
-    }
+    if (!RelatedPhrasesRepository.isRelatedPhrases(phrase))
+      throw new RelatedPhraseNotRetrieved(id);
+
     if (phrase.relatedMusicIds.length === 0) {
       await this.delete(id);
       return true;

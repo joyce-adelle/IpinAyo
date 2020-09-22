@@ -69,3 +69,10 @@ export class PhraseNotFoundError extends MyError {
     super(message);
   }
 }
+
+export class MusicNotFoundError extends MyError {
+  constructor(id: string) {
+    const message = `music with ${id} not found`;
+    super(message);
+  }
+}

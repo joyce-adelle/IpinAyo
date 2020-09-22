@@ -7,7 +7,7 @@ import {
   UsernameAlreadyExistsError,
   CompositionsRequiredError,
   InvalidInputCompositionError,
-} from "./serviceUtils/errors";
+} from "./serviceUtils/Errors";
 import { UserRepository } from "../db/repositories/UserRepository";
 import { User } from "../db/entities/User";
 import { CreateUser } from "../db/inputInterfaces/CreateUser";

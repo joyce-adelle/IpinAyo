@@ -5,12 +5,15 @@ import { User } from "../db/entities/User";
 import {
   CompositionsRequiredError,
   InvalidInputCompositionError,
+  MusicNotFoundError,
   UnAuthorizedError,
   UserNotFoundError,
 } from "./serviceUtils/errors";
 import { UserInterface } from "../context/user.interface";
 import { UserRole } from "../utilities/UserRoles";
 import { UpdateUser } from "../db/inputInterfaces/UpdateUser";
+import { MyDbError } from "../db/dbUtils/MyDbError";
+import { MusicNotRetrieved, UserNotRetrieved } from "../db/dbUtils/DbErrors";
 
 @Service()
 export class UserService {
@@ -46,6 +49,7 @@ export class UserService {
 
       return this.userRepository.updateUser(user.id, data);
     } catch (error) {
+      if (error instanceof MyDbError) throw new UserNotFoundError(user.id);
       throw error;
     }
   }
@@ -55,14 +59,26 @@ export class UserService {
     userToChangeId: string,
     newRole: UserRole
   ): Promise<boolean> {
-    if (user.role === UserRole.User) throw new UnAuthorizedError();
-    return this.userRepository.changeUserRole(userToChangeId, newRole);
+    try {
+      if (user.role === UserRole.User) throw new UnAuthorizedError();
+      return this.userRepository.changeUserRole(userToChangeId, newRole);
+    } catch (error) {
+      if (error instanceof MyDbError)
+        throw new UserNotFoundError(userToChangeId);
+    }
   }
 
   public async downloadMusic(
     user: UserInterface,
     musicId: string
   ): Promise<boolean> {
-    return this.userRepository.userDownloadedMusic(user.id, musicId);
+    try {
+      return this.userRepository.userDownloadedMusic(user.id, musicId);
+    } catch (error) {
+      if (error instanceof UserNotRetrieved)
+        throw new UserNotFoundError(user.id);
+      if (error instanceof MusicNotRetrieved)
+        throw new MusicNotFoundError(user.id);
+    }
   }
 }

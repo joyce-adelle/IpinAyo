@@ -18,7 +18,7 @@ import { ObjectType, Field, ID } from "type-graphql";
 export class User {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
-  id: string;
+  readonly id: string;
 
   @Field(() => String)
   @Column({ unique: true })

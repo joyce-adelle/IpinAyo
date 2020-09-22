@@ -11,26 +11,21 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   ): Promise<RelatedPhrases> {
     let relatedPhrasesDet = new RelatedPhrases();
     Object.assign(relatedPhrasesDet, relatedPhrases);
-    let newRelatedPhrases = await this.save(relatedPhrasesDet);
-    return newRelatedPhrases;
+    return this.save(relatedPhrasesDet);
   }
 
   async findRelatedPhraseDetailsById(id: string): Promise<RelatedPhrases> {
-    let relatedPhrases = await this.findOne({
+    return this.findOne({
       where: { id: id },
     });
-    if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrases)) {
-      throw new Error(
-        `RelatedPhrases' id ${util.inspect(
-          id
-        )} did not retrieve a RelatedPhrase`
-      );
-    }
-    return relatedPhrases;
+  }
+
+  async findOneByPhrase(phrase: string): Promise<RelatedPhrases> {
+    return this.findOne({ where: { phrase: phrase } });
   }
 
   async findRelatedPhrasesByPhrase(phrase: string): Promise<RelatedPhrases[]> {
-    let obj = await this.findOne({ where: { phrase: phrase } });
+    let obj = await this.findOneByPhrase(phrase);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj)) {
       throw new Error(
@@ -38,16 +33,14 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
           phrase
         )} did not retrieve a RelatedPhrase`
       );
-    } else {
-      let rel = await this.find({
-        where: { groupId: obj.groupId },
-      });
-      return rel;
     }
+    return this.find({
+      where: { groupId: obj.groupId },
+    });
   }
 
   async findRelatedPhrasesById(id: string): Promise<RelatedPhrases[]> {
-    let obj = await this.findOne({ where: { id: id } });
+    let obj = await this.findRelatedPhraseDetailsById(id);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj)) {
       throw new Error(
@@ -55,12 +48,10 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
           id
         )} did not retrieve a RelatedPhrase`
       );
-    } else {
-      let rel = await this.find({
-        where: { groupId: obj.groupId },
-      });
-      return rel;
     }
+    return this.find({
+      where: { groupId: obj.groupId },
+    });
   }
 
   async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
@@ -90,27 +81,32 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     id: string,
     relatedPhrases: UpdateRelatedPhrases
   ): Promise<RelatedPhrases> {
-    try {
-      let relatedPhrasesDet = await this.findRelatedPhraseDetailsById(id);
-      Object.assign(relatedPhrasesDet, relatedPhrases);
-      let updatedRelatedPhrases = await this.save(relatedPhrasesDet);
-      return updatedRelatedPhrases;
-    } catch (error) {
-      throw error;
+    let relatedPhrasesDet = await this.findRelatedPhraseDetailsById(id);
+    if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrasesDet)) {
+      throw new Error(
+        `RelatedPhrases' id ${util.inspect(
+          id
+        )} did not retrieve a RelatedPhrase`
+      );
     }
+    Object.assign(relatedPhrasesDet, relatedPhrases);
+    return this.save(relatedPhrasesDet);
   }
 
   async deleteRelatedPhrase(id: string): Promise<boolean> {
-    try {
-      let phrase = await this.findRelatedPhraseDetailsById(id);
-      if (phrase.relatedMusicIds.length === 0) {
-        await this.delete(id);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      throw error;
+    let phrase = await this.findRelatedPhraseDetailsById(id);
+    if (!RelatedPhrasesRepository.isRelatedPhrases(phrase)) {
+      throw new Error(
+        `RelatedPhrases' id ${util.inspect(
+          id
+        )} did not retrieve a RelatedPhrase`
+      );
     }
+    if (phrase.relatedMusicIds.length === 0) {
+      await this.delete(id);
+      return true;
+    }
+    return false;
   }
 
   static isRelatedPhrases(

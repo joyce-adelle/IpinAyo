@@ -9,7 +9,7 @@ export class ChangeUserRoleInput {
   @Length(1)
   @IsId({ message: "$value is not a valid user id" })
   @IsDefined()
-  userId: string;
+  userToChangeId: string;
 
   @Field(() => UserRole)
   @IsEnum(UserRole)

@@ -1,55 +1,61 @@
-import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
-import { getCustomRepository } from "typeorm";
-import { UserRepository } from "../../db/repositories/UserRepository";
-import { User } from "../../db/entities/User";
-import { CreateUserInput } from "../inputs/CreateUser.input";
+import { Resolver, Mutation, Arg, ID, Ctx } from "type-graphql";
 import { UpdateUserInput } from "../inputs/UpdateUser.input";
-import { LoginUserArguments } from "../inputs/LoginUser.input";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
-import { DownloadMusicInput } from "../inputs/DownloadMusic.input";
+import { Inject } from "typedi";
+import { UserService } from "../../services/UserService";
+import { Context } from "../../context/context.interface";
+import { MyError } from "../../services/auth/MyError";
+import { UserError } from "../../utilities/genericTypes";
+import { BooleanPayload, UserPayload } from "../../services/auth/auth.payload";
 
 @Resolver()
 export class UserResolver {
-  private userRepository = getCustomRepository(UserRepository);
+  @Inject()
+  private readonly userService: UserService;
 
-  @Query(() => [User])
-  users() {
-    return this.userRepository.find();
+  @Mutation(() => UserPayload)
+  async updateUser(
+    @Ctx() { user }: Context,
+    @Arg("data") data: UpdateUserInput
+  ) {
+    try {
+      return await this.userService.updateUser(user, data);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
-  @Query(() => User)
-  user(@Arg("id", () => ID) id: string) {
-    return this.userRepository.findUserById(id);
+  @Mutation(() => BooleanPayload)
+  async changeUserRole(
+    @Ctx() { user }: Context,
+    @Arg("details") details: ChangeUserRoleInput
+  ) {
+    try {
+      return await this.userService.changeUserRole(
+        user,
+        details.userToChangeId,
+        details.role
+      );
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
-  @Query(() => User)
-  async loginUser(@Arg("credentials") credentials: LoginUserArguments) {
-    return await this.userRepository.findUserByEmailAndPassword(credentials);
-  }
-
-  @Mutation(() => User)
-  async signUpUser(@Arg("data") data: CreateUserInput) {
-    return await this.userRepository.createAndSave(data);
-  }
-
-  @Mutation(() => User)
-  async updateUser(@Arg("id", () => ID) id: string, @Arg("data") data: UpdateUserInput) {
-    return await this.userRepository.updateUser(id, data);
-  }
-
-  @Mutation(() => Boolean)
-  async changeUserRole(@Arg("details") details: ChangeUserRoleInput) {
-    return await this.userRepository.changeUserRole(
-      details.userId,
-      details.role
-    );
-  }
-
-  @Mutation(() => Boolean)
-  async downloadMusic(@Arg("details") details: DownloadMusicInput) {
-    return await this.userRepository.userDownloadedMusic(
-      details.userId,
-      details.musicId
-    );
+  @Mutation(() => BooleanPayload)
+  async downloadMusic(
+    @Ctx() { user }: Context,
+    @Arg("id", () => ID) musicId: string
+  ) {
+    try {
+      return await this.userService.downloadMusic(user, musicId);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 }

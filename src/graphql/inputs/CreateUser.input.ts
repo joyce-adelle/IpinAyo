@@ -15,25 +15,18 @@ import {
   ArrayMaxSize,
   IsDefined,
 } from "class-validator";
-import { IsUsernameAlreadyExist } from "../validations/Username.validation";
-import { IsEmailAlreadyExist } from "../validations/Email.validation";
+
 
 @InputType()
 export class CreateUserInput implements CreateUser {
   @Field(() => String)
   @IsString()
   @Length(5, 30)
-  @IsUsernameAlreadyExist({
-    message: "Username $value already taken. Choose another username.",
-  })
   username: string;
 
   @Field(() => String)
   @IsEmail()
   @IsString()
-  @IsEmailAlreadyExist({
-    message: "Email $value already exists",
-  })
   email: string;
 
   @Field(() => String)

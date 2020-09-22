@@ -7,78 +7,46 @@ import { createHmac } from "crypto";
 import { LoginUser } from "../inputInterfaces/LoginUser";
 import { MusicRepository } from "./MusicRepository";
 import { UserRole } from "../../utilities/UserRoles";
+import { InjectRepository } from 'typeorm-typedi-extensions';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
+
+  @InjectRepository()
+  private readonly musicRepository: MusicRepository;
+
   async createAndSave(user: CreateUser): Promise<User> {
-    if (user.isComposer && !user.typeOfCompositions)
-      throw new Error("Type of compositions required if user is a composer");
-    if (user.typeOfCompositions) {
-      if (!user.isComposer)
-        throw new Error(
-          "Type of compositions cannot be if user is not a composer"
-        );
-      if (user.typeOfCompositions.length < 1)
-        throw new Error("Type of compositions required if user is a composer");
-    }
     let userDet = new User();
     Object.assign(userDet, user);
-    let newUser = await this.save(userDet);
-    return newUser;
+    return this.save(userDet);
   }
 
   async findUserById(id: string): Promise<User> {
-    let user = await this.findOne({
+    return this.findOne({
       where: { id: id },
     });
-    if (!UserRepository.isUser(user)) {
-      throw new Error(`User id ${util.inspect(id)} did not retrieve a User`);
-    }
-    return user;
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    let user = await this.findOne({
+    return this.findOne({
       where: { email: email },
     });
-    return user;
   }
 
   async findOneByUsername(username: string): Promise<User> {
-    let user = await this.findOne({
+    return this.findOne({
       where: { username: username },
     });
-    return user;
   }
 
   async updateUser(id: string, user: UpdateUser): Promise<User> {
     try {
       let userDet = await this.findUserById(id);
-
-      if (
-        user.isComposer &&
-        !user.typeOfCompositions &&
-        !userDet.typeOfCompositions
-      ) {
-        throw new Error("Type of compositions required if user is a composer");
-      }
-      if (user.typeOfCompositions) {
-        if (!user.isComposer && !userDet.isComposer)
-          throw new Error(
-            "Type of compositions cannot be if user is not a composer"
-          );
-        if (user.typeOfCompositions.length < 1)
-          throw new Error(
-            "Type of compositions required if user is a composer"
-          );
-      }
-
       Object.assign(userDet, user);
       if (userDet.isComposer === false) userDet.typeOfCompositions = [];
-      let updatedUser = await this.save(userDet);
-      return updatedUser;
+      return this.save(userDet);
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
@@ -93,37 +61,36 @@ export class UserRepository extends Repository<User> {
           `User id ${util.inspect(userId)} did not retrieve a User`
         );
       }
-      let music = await getCustomRepository(MusicRepository).findMusicById(
+      let music = await this.musicRepository.findMusicById(
         musicId
       );
       userDet.downloads.push(music);
       music.numberOfDownloads = ++music.numberOfDownloads;
       let downloaded = await this.save(userDet);
-      await getCustomRepository(MusicRepository).save(music);
+      await this.musicRepository.save(music);
       return downloaded ? true : false;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
   async findUserByEmailAndPassword(loginUser: LoginUser): Promise<User> {
-    let user = await this.findOne({
+    return this.findOne({
       where: {
         email: loginUser.email,
         password: createHmac("sha256", loginUser.password).digest("hex"),
       },
     });
-    if (!UserRepository.isUser(user)) {
-      throw new Error(
-        `User email ${util.inspect(loginUser.email)} did not retrieve a User`
-      );
-    }
-    return user;
   }
 
   async changeUserRole(userId: string, newRole: UserRole): Promise<boolean> {
     try {
       let user = await this.findUserById(userId);
+      if (!UserRepository.isUser(user)) {
+        throw new Error(
+          `User id ${util.inspect(userId)} did not retrieve a User`
+        );
+      }
       user.role = newRole;
       let saved = await this.save(user);
       return saved ? true : false;

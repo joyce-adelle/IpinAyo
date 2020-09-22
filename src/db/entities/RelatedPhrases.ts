@@ -14,7 +14,7 @@ import { ObjectType, Field, ID } from 'type-graphql';
 export class RelatedPhrases {
   @Field(() => String)
   @PrimaryGeneratedColumn()
-  id: string;
+  readonly id: string;
 
   @Field(() => String)
   @Column({ unique: true })

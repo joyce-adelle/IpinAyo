@@ -12,7 +12,6 @@ import {
   ArrayNotEmpty,
   ArrayMaxSize,
 } from "class-validator";
-import { IsEmailAlreadyExist } from "../validations/Email.validation";
 
 @InputType()
 export class UpdateUserInput implements UpdateUser {
@@ -20,9 +19,6 @@ export class UpdateUserInput implements UpdateUser {
   @IsOptional()
   @IsEmail()
   @IsString()
-  @IsEmailAlreadyExist({
-    message: "Email $value already exists",
-  })
   email?: string;
 
   @Field(() => String, { nullable: true })

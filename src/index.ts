@@ -1,6 +1,11 @@
 import "reflect-metadata";
-import { createConnection, Connection, getCustomRepository } from "typeorm";
-import { ApolloServer } from "apollo-server-express";
+import {
+  createConnection,
+  Connection,
+  getCustomRepository,
+  useContainer,
+} from "typeorm";
+import { ApolloError, ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { UserResolver } from "./graphql/resolvers/User.resolver";
 import { CategoryResolver } from "./graphql/resolvers/Category.resolver";
@@ -11,26 +16,73 @@ import { MusicResolver } from "./graphql/resolvers/Music.resolver";
 import * as Express from "express";
 import * as Cors from "cors";
 import * as Path from "path";
+import * as jwt from "jsonwebtoken";
 import * as Dotenv from "dotenv";
+import { Container } from "typedi/Container";
+import { AuthResolver } from "./graphql/resolvers/Authetication.resolver";
+import { Context } from "vm";
+import { UserInterface } from "./context/user.interface";
+import { GraphQLError, GraphQLFormattedError } from "graphql";
 
 var connection: Connection;
+useContainer(Container);
 
 async function main() {
   connection = await createConnection();
   Dotenv.config();
+
+  const context = ({ req }): Context => {
+    //Get the jwt token from the header
+    const authorization: string = req.headers.authorization || "";
+    const authorizationSplit: string[] = authorization.split(" ");
+
+    if (authorizationSplit[0].toLocaleLowerCase() !== "bearer") {
+      return;
+    }
+
+    const token: string = authorizationSplit[1];
+    let jwtPayload: string | any;
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      jwtPayload = jwt.verify(token, process.env.JWT_SECRET);
+      return {
+        user: jwtPayload.user as UserInterface,
+      };
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  };
+
   const schema = await buildSchema({
     resolvers: [
       UserResolver,
       CategoryResolver,
       RelatedPhrasesResolver,
       MusicResolver,
+      AuthResolver,
     ],
+    container: Container,
   });
   const server = new ApolloServer({
     schema,
+    context,
+    formatError: (
+      error: GraphQLError
+    ): GraphQLFormattedError<Record<string, any>> => {
+      if (error instanceof ApolloError) {
+        return error;
+      }
+
+      return new GraphQLError("Internal error");
+    },
     engine: {
       reportSchema: true,
-      debugPrintReports: true,
+      // debugPrintReports: true,
     },
   });
   const app = Express();

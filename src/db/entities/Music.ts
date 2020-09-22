@@ -22,7 +22,7 @@ import { Field, ID, Int, ObjectType } from "type-graphql";
 export class Music {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
-  id: string;
+  readonly id: string;
 
   @Field(() => String)
   @Column({

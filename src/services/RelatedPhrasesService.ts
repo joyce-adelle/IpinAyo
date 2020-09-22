@@ -1,3 +1,4 @@
+import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { UserInterface } from "../context/user.interface";
 import { MyDbError } from "../db/dbUtils/MyDbError";
@@ -8,11 +9,13 @@ import { RelatedPhrasesRepository } from "../db/repositories/RelatedPhrasesRepos
 import { UserRole } from "../utilities/UserRoles";
 import {
   CannotBeDeletedError,
+  InvalidGroupIdError,
   PhraseExistsError,
   PhraseNotFoundError,
   UnAuthorizedError,
 } from "./serviceUtils/Errors";
 
+@Service()
 export class RelatedPhrasesService {
   @InjectRepository()
   private readonly relatedPhrasesRepository: RelatedPhrasesRepository;
@@ -37,6 +40,10 @@ export class RelatedPhrasesService {
     if (user.role === UserRole.User) throw new UnAuthorizedError();
     if (await this.relatedPhrasesRepository.findOneByPhrase(data.phrase))
       throw new PhraseExistsError();
+    if (data.groupId) {
+      if (!await this.relatedPhrasesRepository.findOneByGroupId(data.groupId))
+        throw new InvalidGroupIdError(data.groupId);
+    }
     return this.relatedPhrasesRepository.createAndSave(data);
   }
 
@@ -51,6 +58,10 @@ export class RelatedPhrasesService {
       if (data.phrase) {
         if (await this.relatedPhrasesRepository.findOneByPhrase(data.phrase))
           throw new PhraseExistsError();
+      }
+      if (data.groupId) {
+        if (!await this.relatedPhrasesRepository.findOneByGroupId(data.groupId))
+          throw new InvalidGroupIdError(data.groupId);
       }
       return await this.relatedPhrasesRepository.updateRelatedPhrases(id, data);
     } catch (error) {

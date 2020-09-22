@@ -1,5 +1,4 @@
-import { EntityRepository, Repository, getCustomRepository } from "typeorm";
-import * as util from "util";
+import { EntityRepository, Repository} from "typeorm";
 import { User } from "../entities/User";
 import { CreateUser } from "../inputInterfaces/CreateUser";
 import { UpdateUser } from "../inputInterfaces/UpdateUser";
@@ -8,7 +7,6 @@ import { LoginUser } from "../inputInterfaces/LoginUser";
 import { MusicRepository } from "./MusicRepository";
 import { UserRole } from "../../utilities/UserRoles";
 import { InjectRepository } from "typeorm-typedi-extensions";
-import { MyDbError } from "../dbUtils/MyDbError";
 import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 
 @EntityRepository(User)

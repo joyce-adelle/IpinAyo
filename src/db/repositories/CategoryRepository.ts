@@ -1,5 +1,5 @@
-import { EntityRepository, TreeRepository, getConnection } from "typeorm";
-import * as util from "util";
+import { EntityRepository, TreeRepository } from "typeorm";
+import { CategoryNotRetrieved } from "../dbUtils/DbErrors";
 import { Category } from "../entities/Category";
 import { CreateCategory } from "../inputInterfaces/CreateCategory";
 import { UpdateCategory } from "../inputInterfaces/UpdateCategory";
@@ -7,43 +7,36 @@ import { UpdateCategory } from "../inputInterfaces/UpdateCategory";
 @EntityRepository(Category)
 export class CategoryRepository extends TreeRepository<Category> {
   async createAndSave(category: CreateCategory): Promise<Category> {
-    try {
-      let categoryDet = new Category();
-      categoryDet.name = category.name;
-      if (category.parentId) {
-        categoryDet.parent = await this.findCategoryById(category.parentId);
-      }
-      let newCategory = await this.save(categoryDet);
-      return newCategory;
-    } catch (error) {
-      throw error;
+    let categoryDet = new Category();
+    categoryDet.name = category.name;
+    if (category.parentId) {
+      const parent = await this.findCategoryById(category.parentId);
+      if (!CategoryRepository.isCategory(parent))
+        throw new CategoryNotRetrieved(category.parentId);
+      categoryDet.parent = parent;
     }
+    return this.save(categoryDet);
   }
 
   async findCategoryById(id: string): Promise<Category> {
-    let obj = await this.findOne({ where: { id: id } });
+    return this.findOne({ where: { id: id } });
+  }
 
-    if (!CategoryRepository.isCategory(obj)) {
-      throw new Error(
-        `Category' id ${util.inspect(id)} did not retrieve a Category`
-      );
-    }
-    return obj;
+  async findOneByName(name: string): Promise<Category> {
+    return this.findOne({ where: { name: name } });
   }
 
   async findRelatedMusicIdsByCategoryId(categoryId: string): Promise<string[]> {
-    try {
-      let rel = await this.findCategoryById(categoryId);
-      let relatedRels = await this.findDescendants(rel);
+    let rel = await this.findCategoryById(categoryId);
+    if (!CategoryRepository.isCategory(rel))
+      throw new CategoryNotRetrieved(categoryId);
+    let relatedRels = await this.findDescendants(rel);
 
-      let musicIds: string[] = [];
-      for (let key of relatedRels) {
-        musicIds.push(...key.relatedMusicIds);
-      }
-      return [...new Set(musicIds)];
-    } catch (error) {
-      throw error;
+    let musicIds: string[] = [];
+    for (let key of relatedRels) {
+      musicIds.push(...key.relatedMusicIds);
     }
+    return [...new Set(musicIds)];
   }
 
   //not a complete solution
@@ -51,39 +44,41 @@ export class CategoryRepository extends TreeRepository<Category> {
     id: string,
     category: UpdateCategory
   ): Promise<Category> {
-    try {
-      let categoryDet = await this.findCategoryById(id);
-      if (category.name) {
-        categoryDet.name = category.name;
+    let categoryDet = await this.findCategoryById(id);
+    if (!CategoryRepository.isCategory(categoryDet))
+      throw new CategoryNotRetrieved(id);
+    if (category.name) {
+      categoryDet.name = category.name;
+    }
+    if (category.parentId || category.parentId === null) {
+      if (category.parentId === null) {
+        categoryDet.parent = null;
+      } else {
+        const parent = await this.findCategoryById(category.parentId);
+        if (!CategoryRepository.isCategory(parent))
+          throw new CategoryNotRetrieved(category.parentId);
+        categoryDet.parent = parent;
       }
-      if (category.parentId || category.parentId === null) {
-        if (category.parentId === null) {
-          categoryDet.parent = null;
-        } else {
-          categoryDet.parent = await this.findCategoryById(category.parentId);
-        }
 
-        await getConnection().query(
-          `DELETE a FROM category_closure AS a
+      await this.query(
+        `DELETE a FROM category_closure AS a
           JOIN category_closure AS d ON a.id_descendant = d.id_descendant
           LEFT JOIN category_closure AS x
           ON x.id_ancestor = d.id_ancestor AND x.id_descendant = a.id_ancestor
-          WHERE d.id_ancestor = ? AND x.id_ancestor IS NULL`, [id]
-        );
+          WHERE d.id_ancestor = ? AND x.id_ancestor IS NULL`,
+        [id]
+      );
 
-        await getConnection().query(
-          `INSERT INTO category_closure (id_ancestor, id_descendant)
+      await this.query(
+        `INSERT INTO category_closure (id_ancestor, id_descendant)
           SELECT supertree.id_ancestor, subtree.id_descendant
           FROM category_closure AS supertree JOIN category_closure AS subtree
           WHERE subtree.id_ancestor = ?
-          AND supertree.id_descendant = ?`, [id, category.parentId]
-        );
-      }
-      let updatedCategory = await this.save(categoryDet);
-      return updatedCategory;
-    } catch (error) {
-      throw error;
+          AND supertree.id_descendant = ?`,
+        [id, category.parentId]
+      );
     }
+    return this.save(categoryDet);
   }
 
   static isCategory(category: any): category is Category {

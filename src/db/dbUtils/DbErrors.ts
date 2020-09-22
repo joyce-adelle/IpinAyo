@@ -24,3 +24,10 @@ export class RelatedPhraseNotRetrieved extends MyDbError {
     super(message);
   }
 }
+
+export class CategoryNotRetrieved extends MyDbError {
+  constructor(id: string) {
+    const message = `Category id ${id} did not retrieve a Category`;
+    super(message);
+  }
+}

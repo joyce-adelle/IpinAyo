@@ -1,4 +1,5 @@
 import { ObjectType, Field } from "type-graphql";
+import { Category } from '../../db/entities/Category';
 import { RelatedPhrases } from "../../db/entities/RelatedPhrases";
 import { User } from "../../db/entities/User";
 import { userResponse } from "../../utilities/genericTypes";
@@ -24,3 +25,5 @@ export const RelatedPhrasePayload = userResponse(
   RelatedPhrases
 );
 export const RelatedPhrasesPayload = [RelatedPhrases];
+export const CategoriesPayload = [Category];
+export const CategoryPayload = userResponse("CategoryPayload", Category);

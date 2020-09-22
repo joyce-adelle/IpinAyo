@@ -37,7 +37,7 @@ export class InvalidInputCompositionError extends MyError {
 
 export class UserNotFoundError extends MyError {
   constructor(id: string) {
-    const message = `user with ${id} not found`;
+    const message = `user with id ${id} not found`;
     super(message);
   }
 }
@@ -65,14 +65,35 @@ export class PhraseExistsError extends MyError {
 
 export class PhraseNotFoundError extends MyError {
   constructor(id: string) {
-    const message = `phrase with ${id} not found`;
+    const message = `phrase with id ${id} not found`;
     super(message);
   }
 }
 
 export class MusicNotFoundError extends MyError {
   constructor(id: string) {
-    const message = `music with ${id} not found`;
+    const message = `music with id ${id} not found`;
+    super(message);
+  }
+}
+
+export class CategoryNotFoundError extends MyError {
+  constructor(id: string) {
+    const message = `category with id ${id} not found`;
+    super(message);
+  }
+}
+
+export class CategoryExistsError extends MyError {
+  constructor() {
+    const message = "category name already exists";
+    super(message);
+  }
+}
+
+export class InvalidGroupIdError extends MyError {
+  constructor(groupId: string) {
+    const message = `invalid group id ${groupId}`;
     super(message);
   }
 }

@@ -1,7 +1,5 @@
 import { EntityRepository, Repository } from "typeorm";
-import * as util from "util";
 import { RelatedPhraseNotRetrieved } from "../dbUtils/DbErrors";
-import { MyDbError } from "../dbUtils/MyDbError";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
 import { CreateRelatedPhrases } from "../inputInterfaces/CreateRelatedPhrases";
 import { UpdateRelatedPhrases } from "../inputInterfaces/UpdateRelatedPhrases";
@@ -24,6 +22,10 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
 
   async findOneByPhrase(phrase: string): Promise<RelatedPhrases> {
     return this.findOne({ where: { phrase: phrase } });
+  }
+
+  async findOneByGroupId(groupId: string): Promise<RelatedPhrases> {
+    return this.findOne({ where: { groupId: groupId } });
   }
 
   async findRelatedPhrasesByPhrase(phrase: string): Promise<RelatedPhrases[]> {

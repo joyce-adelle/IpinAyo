@@ -44,7 +44,7 @@ export class UserNotFoundError extends MyError {
 
 export class UnAuthorizedError extends MyError {
   constructor() {
-    const message = "user not allowed access";
+    const message = "user not allowed access, please login or re-login";
     super(message);
   }
 }

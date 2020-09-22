@@ -6,7 +6,11 @@ import { UserService } from "../../services/UserService";
 import { Context } from "../../context/context.interface";
 import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
-import { BooleanPayload, UserPayload } from "../../services/serviceUtils/Payloads";
+import {
+  BooleanPayload,
+  BooleanType,
+  UserPayload,
+} from "../../services/serviceUtils/Payloads";
 
 @Resolver()
 export class UserResolver {
@@ -33,11 +37,15 @@ export class UserResolver {
     @Arg("details") details: ChangeUserRoleInput
   ) {
     try {
-      return await this.userService.changeUserRole(
+      const booleanType = new BooleanType();
+      const done = await this.userService.changeUserRole(
         user,
         details.userToChangeId,
         details.role
       );
+
+      booleanType.done = done;
+      return booleanType;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -51,7 +59,10 @@ export class UserResolver {
     @Arg("id", () => ID) musicId: string
   ) {
     try {
-      return await this.userService.downloadMusic(user, musicId);
+      const booleanType = new BooleanType();
+      const done = await this.userService.downloadMusic(user, musicId);
+      booleanType.done = done;
+      return done;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

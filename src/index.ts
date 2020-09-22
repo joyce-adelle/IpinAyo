@@ -77,8 +77,8 @@ async function main() {
       if (error instanceof ApolloError) {
         return error;
       }
-
-      return new GraphQLError("Internal error");
+      return error;
+      // return new GraphQLError("Internal error");
     },
     engine: {
       reportSchema: true,

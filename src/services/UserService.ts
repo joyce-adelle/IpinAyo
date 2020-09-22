@@ -31,6 +31,7 @@ export class UserService {
     data: UpdateUser
   ): Promise<User> {
     try {
+      if (!user) throw new UnAuthorizedError();
       let userDet = await this.getUser(user.id);
 
       if (
@@ -47,7 +48,7 @@ export class UserService {
           throw new CompositionsRequiredError();
       }
 
-      return this.userRepository.updateUser(user.id, data);
+      return await this.userRepository.updateUser(user.id, data);
     } catch (error) {
       if (error instanceof MyDbError) throw new UserNotFoundError(user.id);
       throw error;
@@ -60,11 +61,13 @@ export class UserService {
     newRole: UserRole
   ): Promise<boolean> {
     try {
-      if (user.role === UserRole.User) throw new UnAuthorizedError();
-      return this.userRepository.changeUserRole(userToChangeId, newRole);
+      if (!user) throw new UnAuthorizedError();
+      if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
+      return await this.userRepository.changeUserRole(userToChangeId, newRole);
     } catch (error) {
       if (error instanceof MyDbError)
         throw new UserNotFoundError(userToChangeId);
+      throw error;
     }
   }
 
@@ -73,12 +76,14 @@ export class UserService {
     musicId: string
   ): Promise<boolean> {
     try {
+      if (!user) throw new UnAuthorizedError();
       return this.userRepository.userDownloadedMusic(user.id, musicId);
     } catch (error) {
       if (error instanceof UserNotRetrieved)
         throw new UserNotFoundError(user.id);
       if (error instanceof MusicNotRetrieved)
         throw new MusicNotFoundError(user.id);
+      throw error;
     }
   }
 }

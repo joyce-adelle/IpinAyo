@@ -8,6 +8,7 @@ import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
 import {
   BooleanPayload,
+  BooleanType,
   RelatedPhrasePayload,
   RelatedPhrasesPayload,
 } from "../../services/serviceUtils/Payloads";
@@ -19,7 +20,7 @@ export class RelatedPhrasesResolver {
 
   @Query(() => RelatedPhrasesPayload)
   relatedPhrases() {
-      return this.relatedPhrasesService.getAllRelatedPhrases();
+    return this.relatedPhrasesService.getAllRelatedPhrases();
   }
 
   @Query(() => RelatedPhrasePayload)
@@ -77,11 +78,13 @@ export class RelatedPhrasesResolver {
     @Arg("id", () => ID) id: string
   ) {
     try {
+      const booleanType = new BooleanType();
       const del = await this.relatedPhrasesService.deleteRelatedPhrase(
         user,
         id
       );
-      return del;
+      booleanType.done = del;
+      return booleanType;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

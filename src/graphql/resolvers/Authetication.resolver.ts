@@ -17,9 +17,7 @@ export class AuthResolver {
   private readonly authService: AutheticationService;
 
   @Query(() => LoginPayload)
-  public async login(
-    @Arg("credentials") credentials: LoginUserInput
-  ): Promise<typeof LoginPayload> {
+  public async login(@Arg("credentials") credentials: LoginUserInput) {
     try {
       const loginType = new LoginType();
       const token = await this.authService.login(

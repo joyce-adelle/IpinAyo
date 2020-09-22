@@ -22,15 +22,18 @@ export class RelatedPhrasesService {
   }
 
   public async getRelatedPhrase(id: string): Promise<RelatedPhrases> {
-    const phrase = await this.relatedPhrasesRepository.findRelatedPhraseDetailsById(id);
-    if(!phrase) throw new PhraseNotFoundError(id)
-    return phrase
+    const phrase = await this.relatedPhrasesRepository.findRelatedPhraseDetailsById(
+      id
+    );
+    if (!phrase) throw new PhraseNotFoundError(id);
+    return phrase;
   }
 
   public async createRelatedPhrase(
     user: UserInterface,
     data: CreateRelatedPhrases
   ): Promise<RelatedPhrases> {
+    if (!user) throw new UnAuthorizedError();
     if (user.role === UserRole.User) throw new UnAuthorizedError();
     if (await this.relatedPhrasesRepository.findOneByPhrase(data.phrase))
       throw new PhraseExistsError();
@@ -43,25 +46,32 @@ export class RelatedPhrasesService {
     data: UpdateRelatedPhrases
   ): Promise<RelatedPhrases> {
     try {
+      if (!user) throw new UnAuthorizedError();
       if (user.role === UserRole.User) throw new UnAuthorizedError();
       if (data.phrase) {
         if (await this.relatedPhrasesRepository.findOneByPhrase(data.phrase))
           throw new PhraseExistsError();
       }
-      return this.relatedPhrasesRepository.updateRelatedPhrases(id, data);
+      return await this.relatedPhrasesRepository.updateRelatedPhrases(id, data);
     } catch (error) {
       if (error instanceof MyDbError) throw new PhraseNotFoundError(id);
+      throw error;
     }
   }
 
-  public async deleteRelatedPhrase(user: UserInterface, id: string): Promise<boolean> {
+  public async deleteRelatedPhrase(
+    user: UserInterface,
+    id: string
+  ): Promise<boolean> {
     try {
+      if (!user) throw new UnAuthorizedError();
       if (user.role === UserRole.User) throw new UnAuthorizedError();
       const del = await this.relatedPhrasesRepository.deleteRelatedPhrase(id);
       if (!del) throw new CannotBeDeletedError();
       return del;
     } catch (error) {
       if (error instanceof MyDbError) throw new PhraseNotFoundError(id);
+      throw error;
     }
   }
 }

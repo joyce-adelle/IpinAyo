@@ -7,7 +7,7 @@ import {
   InvalidInputCompositionError,
   UnAuthorizedError,
   UserNotFoundError,
-} from "./auth/auth.error";
+} from "./serviceUtils/errors";
 import { UserInterface } from "../context/user.interface";
 import { UserRole } from "../utilities/UserRoles";
 import { UpdateUser } from "../db/inputInterfaces/UpdateUser";

@@ -4,8 +4,8 @@ import {
   LoginPayload,
   LoginType,
   SignUpPayload,
-} from "../../services/auth/auth.payload";
-import { MyError } from "../../services/auth/MyError";
+} from "../../services/serviceUtils/payloads";
+import { MyError } from "../../services/serviceUtils/MyError";
 import { AutheticationService } from "../../services/AutheticationService";
 import { UserError } from "../../utilities/genericTypes";
 import { CreateUserInput } from "../inputs/CreateUser.input";

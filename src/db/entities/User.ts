@@ -7,16 +7,14 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
-  RelationId,
 } from "typeorm";
 import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
 import { CompositionType } from "../../utilities/CompositionType";
-import { ObjectType, Field, ID } from "type-graphql";
+import { ObjectType, Field} from "type-graphql";
 @Entity()
 @ObjectType()
 export class User {
-  @Field(() => ID)
   @PrimaryGeneratedColumn()
   readonly id: string;
 

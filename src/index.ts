@@ -23,6 +23,7 @@ import { AuthResolver } from "./graphql/resolvers/Authetication.resolver";
 import { Context } from "vm";
 import { UserInterface } from "./context/user.interface";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
+import { MusicRepository } from "./db/repositories/MusicRepository";
 
 var connection: Connection;
 useContainer(Container);
@@ -97,15 +98,15 @@ async function main() {
     "/music/score",
     Express.static(Path.join(__dirname, "../public/scores"))
   );
-  // app.use(Express.urlencoded({ extended: false }));
+  app.use(Express.urlencoded({ extended: false }));
 
   app.listen(4000, () =>
     console.log("Server is running on http://localhost:4000/graphql")
   );
 
-  //   let rep = getCustomRepository(RelatedPhrasesRepository);
+  //   let rep = getCustomRepository(MusicRepository);
   //   try {
-  //   let c = await rep.deleteRelatedPhrase('2')
+  //   let c = await rep.findRelatedMusicIdsByQuery("God");
   //   console.log(c)
   // } catch (error) {
   //     console.log(error.message)

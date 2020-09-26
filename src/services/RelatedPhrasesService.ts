@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { UserInterface } from "../context/user.interface";
-import { MyDbError } from "../db/dbUtils/MyDbError";
+import { RelatedPhraseNotRetrieved } from '../db/dbUtils/DbErrors';
 import { RelatedPhrases } from "../db/entities/RelatedPhrases";
 import { CreateRelatedPhrases } from "../db/inputInterfaces/CreateRelatedPhrases";
 import { UpdateRelatedPhrases } from "../db/inputInterfaces/UpdateRelatedPhrases";
@@ -14,6 +14,7 @@ import {
   PhraseNotFoundError,
   UnAuthorizedError,
 } from "./serviceUtils/Errors";
+import { MyError } from './serviceUtils/MyError';
 
 @Service()
 export class RelatedPhrasesService {
@@ -65,8 +66,8 @@ export class RelatedPhrasesService {
       }
       return await this.relatedPhrasesRepository.updateRelatedPhrases(id, data);
     } catch (error) {
-      if (error instanceof MyDbError) throw new PhraseNotFoundError(id);
-      throw error;
+      if (error instanceof RelatedPhraseNotRetrieved) throw new PhraseNotFoundError(id);
+      throw new MyError(error.message);
     }
   }
 
@@ -81,8 +82,7 @@ export class RelatedPhrasesService {
       if (!del) throw new CannotBeDeletedError();
       return del;
     } catch (error) {
-      if (error instanceof MyDbError) throw new PhraseNotFoundError(id);
-      throw error;
-    }
+      if (error instanceof RelatedPhraseNotRetrieved) throw new PhraseNotFoundError(id);
+      throw new MyError(error.message);    }
   }
 }

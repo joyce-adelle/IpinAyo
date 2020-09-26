@@ -1,6 +1,7 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { UserInterface } from "../context/user.interface";
+import { CategoryNotRetrieved } from '../db/dbUtils/DbErrors';
 import { MyDbError } from "../db/dbUtils/MyDbError";
 import { Category } from "../db/entities/Category";
 import { CreateCategory } from "../db/inputInterfaces/CreateCategory";
@@ -44,9 +45,9 @@ export class CategoryService {
         throw new CategoryExistsError();
       return await this.categoryRepository.createAndSave(data);
     } catch (error) {
-      if (error instanceof MyDbError)
+      if (error instanceof CategoryNotRetrieved)
         throw new CategoryNotFoundError(data.parentId);
-      throw error;
+      throw new MyError(error.message);
     }
   }
 
@@ -64,9 +65,7 @@ export class CategoryService {
       }
       return await this.categoryRepository.updateCategory(id, data);
     } catch (error) {
-      if (error instanceof MyDbError)
         throw new MyError(error.message);
-      throw error;
     }
   }
 }

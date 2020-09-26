@@ -8,7 +8,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-  RelationId,
 } from "typeorm";
 import { User } from "./User";
 import { ScoreType } from "../../utilities/ScoreType";
@@ -87,14 +86,9 @@ export class Music {
   @ManyToOne((type) => User, (user) => user.uploads)
   uploadedBy: User;
 
-  @Field(() => [Category])
   @ManyToMany((type) => Category, (category) => category.relatedMusic)
   @JoinTable()
   categories: Category[];
-
-  @Field(() => [ID])
-  @RelationId((music: Music) => music.categories)
-  categoryIds: string[];
 
   @ManyToMany(
     (type) => RelatedPhrases,
@@ -103,10 +97,6 @@ export class Music {
   @JoinTable()
   relatedPhrases: RelatedPhrases[];
 
-  @Field(() => [ID])
-  @RelationId((music: Music) => music.relatedPhrases)
-  relatedPhrasesIds: string[];
-
   @Field(() => Date)
   @CreateDateColumn({
     type: "timestamp",
@@ -114,7 +104,6 @@ export class Music {
   })
   createdAt: Date;
 
-  @Field(() => Date)
   @UpdateDateColumn({
     type: "timestamp",
     default: () => "CURRENT_TIMESTAMP(6)",

@@ -51,7 +51,8 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   }
 
   async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
-    const result = await this.createQueryBuilder()
+    const result = await this.createQueryBuilder("relatedPhrases")
+    .leftJoinAndSelect("relatedPhrases.relatedMusic", "music")
       .where((qb) => {
         const subQuery = qb
           .subQuery()
@@ -63,8 +64,11 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
           .getQuery();
         return "groupId IN " + subQuery;
       })
+      .andWhere("music.isVerified = true")
       .orderBy("groupId")
       .getMany();
+
+      console.log(result);
 
     let musicIds: string[] = [];
     for (let key of result) {

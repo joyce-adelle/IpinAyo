@@ -12,8 +12,8 @@ import {
 import { UserInterface } from "../context/user.interface";
 import { UserRole } from "../utilities/UserRoles";
 import { UpdateUser } from "../db/inputInterfaces/UpdateUser";
-import { MyDbError } from "../db/dbUtils/MyDbError";
 import { MusicNotRetrieved, UserNotRetrieved } from "../db/dbUtils/DbErrors";
+import { MyError } from './serviceUtils/MyError';
 
 @Service()
 export class UserService {
@@ -50,8 +50,8 @@ export class UserService {
 
       return await this.userRepository.updateUser(user.id, data);
     } catch (error) {
-      if (error instanceof MyDbError) throw new UserNotFoundError(user.id);
-      throw error;
+      if (error instanceof UserNotRetrieved) throw new UserNotFoundError(user.id);
+      throw new MyError(error.message);
     }
   }
 
@@ -65,9 +65,9 @@ export class UserService {
       if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
       return await this.userRepository.changeUserRole(userToChangeId, newRole);
     } catch (error) {
-      if (error instanceof MyDbError)
+      if (error instanceof UserNotRetrieved)
         throw new UserNotFoundError(userToChangeId);
-      throw error;
+      throw new MyError(error.message);
     }
   }
 
@@ -83,7 +83,7 @@ export class UserService {
         throw new UserNotFoundError(user.id);
       if (error instanceof MusicNotRetrieved)
         throw new MusicNotFoundError(user.id);
-      throw error;
+      throw new MyError(error.message);
     }
   }
 }

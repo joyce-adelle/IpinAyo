@@ -1,10 +1,6 @@
 import { InputType, Field } from "type-graphql";
 import { CompositionType } from "../../utilities/CompositionType";
-import { UpdateUser } from "../../db/inputInterfaces/UpdateUser";
 import {
-  IsEmail,
-  IsString,
-  Length,
   IsBoolean,
   ArrayUnique,
   IsOptional,
@@ -14,19 +10,7 @@ import {
 } from "class-validator";
 
 @InputType()
-export class UpdateUserInput implements UpdateUser {
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsEmail()
-  @IsString()
-  email?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  @Length(8, 30)
-  password?: string;
-
+export class UpdateUserCompositionInput {
   @Field(() => Boolean, { nullable: true })
   @IsOptional()
   @IsBoolean()

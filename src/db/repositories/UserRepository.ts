@@ -1,4 +1,4 @@
-import { EntityRepository, Repository} from "typeorm";
+import { EntityRepository, Repository } from "typeorm";
 import { User } from "../entities/User";
 import { CreateUser } from "../inputInterfaces/CreateUser";
 import { UpdateUser } from "../inputInterfaces/UpdateUser";
@@ -71,6 +71,23 @@ export class UserRepository extends Repository<User> {
         password: createHmac("sha256", loginUser.password).digest("hex"),
       },
     });
+  }
+
+  async findUserPassword(id: string, oldPasword: string): Promise<User> {
+    return this.findOne({
+      where: {
+        id: id,
+        password: createHmac("sha256", oldPasword).digest("hex"),
+      },
+    });
+  }
+
+  async getUserPasswordByEmail(email: string): Promise<string> {
+    const user = await this.findOne({
+      where: { email: email },
+      select: ["password"],
+    });
+    return user ? createHmac("sha256", user.password).digest("hex") : "";
   }
 
   async changeUserRole(userId: string, newRole: UserRole): Promise<boolean> {

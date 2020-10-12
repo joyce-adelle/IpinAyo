@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Arg, ID, Ctx } from "type-graphql";
-import { UpdateUserInput } from "../inputs/UpdateUser.input";
+import { UpdateUserCompositionInput } from "../inputs/UpdateUserComposition.input";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
 import { Inject } from "typedi";
 import { UserService } from "../../services/UserService";
@@ -11,6 +11,8 @@ import {
   BooleanType,
   UserPayload,
 } from "../../services/serviceUtils/Payloads";
+import { EmailInput } from "../inputs/Email.input";
+import { ChangePasswordInput } from "../inputs/ChangePassword.input";
 
 @Resolver()
 export class UserResolver {
@@ -18,12 +20,48 @@ export class UserResolver {
   private readonly userService: UserService;
 
   @Mutation(() => UserPayload)
-  async updateUser(
+  async updateUserComposition(
     @Ctx() { user }: Context,
-    @Arg("data") data: UpdateUserInput
+    @Arg("data") data: UpdateUserCompositionInput
   ) {
     try {
-      return await this.userService.updateUser(user, data);
+      return await this.userService.updateUserComposition(user, data);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
+  }
+
+  @Mutation(() => BooleanPayload)
+  async changeEmail(
+    @Ctx() { user }: Context,
+    @Arg("email") emailInput: EmailInput
+  ) {
+    try {
+      const booleanType = new BooleanType();
+      const done = await this.userService.changeEmail(user, emailInput.email);
+
+      booleanType.done = done;
+      return booleanType;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
+  }
+
+  @Mutation(() => BooleanPayload)
+  async changePassword(
+    @Ctx() { user }: Context,
+    @Arg("input") input: ChangePasswordInput
+  ) {
+    try {
+      const booleanType = new BooleanType();
+      const done = await this.userService.changePassword(user, input);
+      booleanType.done = done;
+      
+      return booleanType;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

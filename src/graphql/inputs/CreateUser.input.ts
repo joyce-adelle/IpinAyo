@@ -15,6 +15,7 @@ import {
   ArrayMaxSize,
   IsDefined,
 } from "class-validator";
+import { IsEqualTo } from '../validations/IsEqualTo.validation';
 
 
 @InputType()
@@ -33,6 +34,12 @@ export class CreateUserInput implements CreateUser {
   @IsString()
   @Length(8, 30)
   password: string;
+
+  @Field(() => String)
+  @IsString()
+  @Length(8, 30)
+  @IsEqualTo('password')
+  confirmPassword: string;
 
   @Field(() => Boolean)
   @IsBoolean()

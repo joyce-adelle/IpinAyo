@@ -7,33 +7,43 @@ import {
   UsernameAlreadyExistsError,
   CompositionsRequiredError,
   InvalidInputCompositionError,
+  UserWithEmailNotFoundError,
+  PasswordsDoNotMatchError,
 } from "./serviceUtils/Errors";
 import { UserRepository } from "../db/repositories/UserRepository";
 import { User } from "../db/entities/User";
-import { CreateUser } from "../db/inputInterfaces/CreateUser";
+import { sendEmail } from "./serviceUtils/sendEmail";
+import { SignUpUser } from "./serviceUtils/interfaces/SignUp.interface";
+import { getConfirmationUrl } from "./serviceUtils/getConfirmationUrl";
 
 @Service()
 export class AutheticationService {
   @InjectRepository()
   private readonly userRepository: UserRepository;
 
-  public async signUp(createUser: CreateUser): Promise<User> {
-    if (await this.userRepository.findOneByEmail(createUser.email))
+  public async signUp(newUser: SignUpUser): Promise<User> {
+    if (newUser.password !== newUser.confirmPassword)
+      throw new PasswordsDoNotMatchError();
+
+    if (await this.userRepository.findOneByEmail(newUser.email))
       throw new EmailAlreadyExistsError();
 
-    if (await this.userRepository.findOneByUsername(createUser.username))
+    if (await this.userRepository.findOneByUsername(newUser.username))
       throw new UsernameAlreadyExistsError();
 
-    if (createUser.isComposer && !createUser.typeOfCompositions)
+    if (newUser.isComposer && !newUser.typeOfCompositions)
       throw new CompositionsRequiredError();
 
-    if (createUser.typeOfCompositions) {
-      if (!createUser.isComposer) throw new InvalidInputCompositionError();
-      if (createUser.typeOfCompositions.length < 1)
+    if (newUser.typeOfCompositions) {
+      if (!newUser.isComposer) throw new InvalidInputCompositionError();
+      if (newUser.typeOfCompositions.length < 1)
         throw new CompositionsRequiredError();
     }
 
-    return this.userRepository.createAndSave(createUser);
+    const user = await this.userRepository.createAndSave(newUser);
+    await sendEmail(user.email, getConfirmationUrl(user.id));
+
+    return user;
   }
 
   public async login(email: string, password: string): Promise<string> {
@@ -56,9 +66,18 @@ export class AutheticationService {
         },
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     return token;
+  }
+
+  async forgotPassword(email: string): Promise<boolean> {
+    const userPassword = await this.userRepository.getUserPasswordByEmail(
+      email
+    );
+    if (!userPassword) throw new UserWithEmailNotFoundError(email);
+    await sendEmail(email, null, userPassword);
+    return true;
   }
 }

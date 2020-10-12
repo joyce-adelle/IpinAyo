@@ -13,10 +13,11 @@ import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 import { MyDbError } from "../dbUtils/MyDbError";
 import { MusicDetails } from "../subEntities/MusicDetails";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
+import { Inject } from 'typedi';
 
 @EntityRepository(Music)
 export class MusicRepository extends Repository<Music> {
-  @InjectRepository()
+  @Inject()
   private readonly userRepository: UserRepository;
 
   @InjectRepository()

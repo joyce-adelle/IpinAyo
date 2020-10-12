@@ -97,3 +97,17 @@ export class InvalidGroupIdError extends MyError {
     super(message);
   }
 }
+
+export class UserWithEmailNotFoundError extends MyError {
+  constructor(email: string) {
+    const message = `user with email ${email} not found`;
+    super(message);
+  }
+}
+
+export class PasswordsDoNotMatchError extends MyError {
+  constructor() {
+    const message = "password and confirmed password don't match";
+    super(message);
+  }
+}

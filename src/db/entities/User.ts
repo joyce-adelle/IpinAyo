@@ -49,6 +49,10 @@ export class User {
   @Column()
   isComposer: boolean;
 
+  @Field(() => Boolean)
+  @Column({ default: false })
+  isVerified: boolean;
+
   @Field(() => [CompositionType], { nullable: true })
   @Column({
     type: "set",

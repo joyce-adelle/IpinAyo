@@ -106,7 +106,7 @@ async function main() {
 
   //   let rep = getCustomRepository(MusicRepository);
   //   try {
-  //   let c = await rep.findRelatedMusicIdsByQuery("God");
+  //   let c = await rep.findMusicByQueryAndGroup("holy communion");
   //   console.log(c)
   // } catch (error) {
   //     console.log(error.message)

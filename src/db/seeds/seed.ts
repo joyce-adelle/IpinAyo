@@ -88,6 +88,7 @@ async function main() {
     user10.lastName = "Happy10";
     user10.email = "user10@mail.com";
     user10.password = "user10secret";
+    user10.isVerified = true;
     user10.role = UserRole.Superadmin;
     user10.isComposer = true;
     user10.typeOfCompositions = [CompositionType.Sacred];

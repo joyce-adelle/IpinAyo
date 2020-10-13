@@ -12,6 +12,5 @@ export interface UpdateMusic {
   yearOfComposition?: string;
   arrangers?: string;
   yearOfArrangement?: string;
-  verifiedById?: string;
-  updatedById?: string;
+  isVerified?: boolean;
 }

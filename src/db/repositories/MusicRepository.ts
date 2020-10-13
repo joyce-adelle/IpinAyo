@@ -13,7 +13,7 @@ import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 import { MyDbError } from "../dbUtils/MyDbError";
 import { MusicDetails } from "../subEntities/MusicDetails";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
-import { Inject } from 'typedi';
+import { Inject } from "typedi";
 
 @EntityRepository(Music)
 export class MusicRepository extends Repository<Music> {
@@ -29,14 +29,6 @@ export class MusicRepository extends Repository<Music> {
   async createAndSave(music: CreateMusic): Promise<Music> {
     let musicDet = new Music();
     Object.assign(musicDet, music);
-
-    access(music.scorePath, F_OK, (err) => {
-      if (err) {
-        throw new MyDbError("Score not found");
-      } else {
-        musicDet.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
-      }
-    });
 
     let uploadedBy = await this.userRepository.findUserById(music.uploadedById);
     if (!uploadedBy) throw new UserNotRetrieved(music.uploadedById);
@@ -62,124 +54,51 @@ export class MusicRepository extends Repository<Music> {
       musicDet.isVerified = true;
       musicDet.verifiedBy = uploadedBy;
     }
-    if (music.audioPath) {
-      access(music.audioPath, F_OK, (err) => {
-        if (err) {
-          musicDet.audio = null;
-        } else {
-          musicDet.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
-        }
-      });
-    }
 
     return this.save(musicDet);
   }
 
-  async allMusic(): Promise<Music[]> {
+  async all(): Promise<Music[]> {
     return this.find({
       where: { isVerified: true },
     });
   }
 
-  async allUnverifiedMusic(): Promise<Music[]> {
+  async allUnverified(): Promise<Music[]> {
     return this.find({
       where: { isVerified: false },
     });
   }
 
-  async findMusicDetailsById(id: string): Promise<MusicDetails> {
+  async findDetailsById(id: string): Promise<MusicDetails> {
     return this.findOne({
       where: { id: id },
       relations: ["categories", "relatedPhrases", "uploadedBy"],
     });
   }
 
-  async findMusicById(id: string): Promise<Music> {
+  async findById(id: string): Promise<Music> {
     return this.findOne({
       where: { id: id },
     });
   }
 
-  async findRelatedMusicByQuery(query: string): Promise<Music[]>;
-  async findRelatedMusicByQuery(
+  async findByQueryAndCategoryIds(
     query: string,
     selectedCategoryIds: string[]
-  ): Promise<Music[]>;
-
-  async findRelatedMusicByQuery(
-    query: string,
-    selectedCategoryIds?: string[]
   ): Promise<Music[]> {
-    if (selectedCategoryIds) {
-      if (selectedCategoryIds.length !== 0) {
-        let allCats: string[] = [];
-        await this.query(
-          "SELECT distinct id_descendant as id FROM category_closure WHERE id_ancestor in (?)",
-          [...selectedCategoryIds]
-        ).then((RowDataPackets) => {
-          allCats.push(...RowDataPackets.map((cat: { id: string }) => cat.id));
-        });
-        if (allCats.length === 0)
-          throw new MyDbError("invalid category among selected categories");
-        return this.createQueryBuilder("music")
-          .distinct(true)
-          .leftJoin("music.categories", "category")
-          .where(
-            "MATCH(title, composers, arrangers, description) AGAINST (:query IN BOOLEAN MODE)",
-            {
-              query: query.trim(),
-            }
-          )
-          .andWhere("category.id IN (:...allCats)", {
-            allCats,
-          })
-          .having("isVerified = true")
-          .getMany();
-      }
-    }
+    if (selectedCategoryIds.length === 0) return this.findByQuery(query);
     return this.createQueryBuilder("music")
       .distinct(true)
       .leftJoin("music.categories", "category")
+      .leftJoin("music.relatedPhrases", "relatedPhrases")
       .where(
         "MATCH(title, composers, arrangers, description) AGAINST (:query IN BOOLEAN MODE)",
         {
           query: query.trim(),
         }
       )
-      .having("isVerified = true")
-      .getMany();
-  }
-
-  async findRelatedMusicByCategories(categories: string[]): Promise<Music[]> {
-    if (categories.length === 0)
-      return this.find({
-        where: { isVerified: true },
-      });
-
-    let allCats: string[] = [];
-    await this.query(
-      "SELECT distinct id_descendant as id FROM category_closure WHERE id_ancestor in (?)",
-      [...categories]
-    ).then((RowDataPackets) => {
-      allCats.push(...RowDataPackets.map((cat: { id: string }) => cat.id));
-    });
-    if (allCats.length === 0)
-      throw new MyDbError("invalid category among selected categories");
-    return this.createQueryBuilder("music")
-      .distinct(true)
-      .leftJoin("music.categories", "category")
-      .where("category.id IN (:...allCats)", {
-        allCats,
-      })
-      .having("isVerified = true")
-      .printSql()
-      .getMany();
-  }
-
-  async findRelatedMusicIdsByQuery(query: string): Promise<Music[]> {
-    return this.createQueryBuilder("music")
-      .leftJoin("music.relatedPhrases", "relatedPhrases")
-      .where((qb) => {
+      .orWhere((qb) => {
         const subQuery = qb
           .subQuery()
           .select("relatedPhrases.groupId")
@@ -188,19 +107,142 @@ export class MusicRepository extends Repository<Music> {
             query: query.trim(),
           })
           .getQuery();
-        return "groupId IN " + subQuery;
+        return "relatedPhrases.groupId IN " + subQuery;
+      })
+      .andWhere("category.id IN (:...selectedCategoryIds)", {
+        selectedCategoryIds,
       })
       .having("isVerified = true")
-      .orderBy("relatedPhrases.groupId")
       .getMany();
   }
 
-  async updateMusic(id: string, music: UpdateMusic): Promise<Music> {
-    let musicDet = await this.findMusicById(id);
+  async findByQuery(query: string): Promise<Music[]> {
+    return this.createQueryBuilder("music")
+      .distinct(true)
+      .leftJoin("music.relatedPhrases", "relatedPhrases")
+      .where(
+        "MATCH(title, composers, arrangers, description) AGAINST (:query IN BOOLEAN MODE)",
+        {
+          query: query.trim(),
+        }
+      )
+      .orWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select("relatedPhrases.groupId")
+          .from(RelatedPhrases, "relatedPhrases")
+          .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
+            query: query.trim(),
+          })
+          .getQuery();
+        return "relatedPhrases.groupId IN " + subQuery;
+      })
+      .having("isVerified = true")
+      .getMany();
+  }
+
+  async findByCategoryIds(categoryIds: string[]): Promise<Music[]> {
+    if (categoryIds.length === 0) return this.all();
+
+    return this.createQueryBuilder("music")
+      .distinct(true)
+      .leftJoin("music.categories", "category")
+      .where("category.id IN (:...categoryIds)", {
+        categoryIds,
+      })
+      .having("isVerified = true")
+      .getMany();
+  }
+
+  async findByQueryAndExactCategoryIds(
+    query: string,
+    categoryIds: string[]
+  ): Promise<Music[]> {
+    if (categoryIds.length === 0) return this.findByQuery(query);
+
+    return this.createQueryBuilder("music")
+      .distinct(true)
+      .leftJoin("music.categories", "category")
+      .leftJoin("music.relatedPhrases", "relatedPhrases")
+      .where(
+        "MATCH(title, composers, arrangers, description) AGAINST (:query IN BOOLEAN MODE)",
+        {
+          query: query.trim(),
+        }
+      )
+      .orWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select("relatedPhrases.groupId")
+          .from(RelatedPhrases, "relatedPhrases")
+          .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
+            query: query.trim(),
+          })
+          .getQuery();
+        return "relatedPhrases.groupId IN " + subQuery;
+      })
+      .andWhere("category.id IN (:...categoryIds)", {
+        categoryIds,
+      })
+      .groupBy("music.id")
+      .having("count(distinct categoryId) >= :length", {
+        length: categoryIds.length,
+      })
+      .andHaving("isVerified = true")
+      .getMany();
+  }
+
+  async findByExactCategoryIds(categoryIds: string[]): Promise<Music[]> {
+    if (categoryIds.length === 0) return this.all();
+
+    return this.createQueryBuilder("music")
+      .distinct(true)
+      .leftJoin("music.categories", "category")
+      .where("category.id IN (:...categoryIds)", {
+        categoryIds,
+      })
+      .groupBy("music.id")
+      .having("count(distinct categoryId) >= :length", {
+        length: categoryIds.length,
+      })
+      .andHaving("isVerified = true")
+      .getMany();
+  }
+
+  // async findByQueryAndGroup(query: string): Promise<Music[]> {
+  //   return this.createQueryBuilder("music")
+  //     .distinct(true)
+  //     .leftJoin("music.relatedPhrases", "relatedPhrases")
+  //     .where((qb) => {
+  //       const subQuery = qb
+  //         .subQuery()
+  //         .select("relatedPhrases.groupId")
+  //         .from(RelatedPhrases, "relatedPhrases")
+  //         .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
+  //           query: query.trim(),
+  //         })
+  //         .getQuery();
+  //       return "relatedPhrases.groupId IN " + subQuery;
+  //     })
+  //     .having("isVerified = true")
+  //     .orderBy("relatedPhrases.groupId")
+  //     .getMany();
+  // }
+
+  async updateMusic(
+    id: string,
+    updatedById: string,
+    music: UpdateMusic
+  ): Promise<Music> {
+    let musicDet = await this.findById(id);
     if (!MusicRepository.isMusic(musicDet)) {
       throw new MusicNotRetrieved(id);
     }
     Object.assign(musicDet, music);
+    const user = await this.userRepository.findUserById(updatedById);
+    musicDet.updatedBy = user;
+    if (music.isVerified) musicDet.verifiedBy = user;
+
     return this.save(musicDet);
   }
 

@@ -26,17 +26,17 @@ export class CategoryRepository extends TreeRepository<Category> {
     return this.findOne({ where: { name: name } });
   }
 
-  async findRelatedMusicIdsByCategoryId(categoryId: string): Promise<string[]> {
-    let rel = await this.findCategoryById(categoryId);
-    if (!CategoryRepository.isCategory(rel))
-      throw new CategoryNotRetrieved(categoryId);
-    let relatedRels = await this.findDescendants(rel);
-
-    let musicIds: string[] = [];
-    for (let key of relatedRels) {
-      musicIds.push(...key.relatedMusicIds);
+  async findDescendantIdsByIds(categoryIds: string[]): Promise<string[]> {
+    let allCats: string[] = [];
+    if (categoryIds.length !== 0) {
+      await this.query(
+        "SELECT distinct id_descendant as id FROM category_closure WHERE id_ancestor in (?)",
+        [...categoryIds]
+      ).then((RowDataPackets) => {
+        allCats.push(...RowDataPackets.map((cat: { id: string }) => cat.id));
+      });
     }
-    return [...new Set(musicIds)];
+    return allCats;
   }
 
   //not a complete solution

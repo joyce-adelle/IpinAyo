@@ -32,21 +32,5 @@ export class MusicSubscriber implements EntitySubscriberInterface<Music> {
       event.entity.verifiedAt = new Date();
     }
   }
-
-  afterRemove(event: RemoveEvent<Music>){
-    fs.unlink(event.entity.score, function (err) {
-      if (err) throw err;
-      console.log('File deleted!');
-    });
-    if(event.entity.audio){
-      fs.unlink(event.entity.audio, function (err) {
-        if (err) throw err;
-        console.log('File deleted!');
-      });
-    }
-  }
-
-  afterLoad(entity: Music){
     
-  }
 }

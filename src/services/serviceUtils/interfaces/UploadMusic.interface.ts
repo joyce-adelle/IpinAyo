@@ -1,17 +1,19 @@
-import { ScoreType } from "../../utilities/ScoreType";
+import { CreateMusic } from "../../../db/inputInterfaces/CreateMusic";
+import { ScoreType } from "../../../utilities/ScoreType";
 
-export interface CreateMusic {
-  score: string;
+export class UploadMusic {
   title: string;
   description: string;
   scoreType: ScoreType;
   languages: string[];
   relatedPhrasesIds: string[];
   categoryIds: string[];
-  uploadedById: string;
-  audio?: string,
   composers?: string;
   yearOfComposition?: string;
   arrangers?: string;
   yearOfArrangement?: string;
+  scorePath: string;
+  audioPath?: string;
+  scoreFilename: string;
+  audioFilename?: string;
 }

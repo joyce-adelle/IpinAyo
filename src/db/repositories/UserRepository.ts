@@ -54,7 +54,7 @@ export class UserRepository extends Repository<User> {
     });
     if (!UserRepository.isUser(userDet)) throw new UserNotRetrieved(userId);
 
-    let music = await this.musicRepository.findMusicById(musicId);
+    let music = await this.musicRepository.findById(musicId);
     if (!music) throw new MusicNotRetrieved(musicId);
 
     userDet.downloads.push(music);

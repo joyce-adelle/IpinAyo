@@ -25,6 +25,7 @@ export const UserSeed = [
     lastName: "Happy4",
     email: "user4@mail.com",
     password: "user4secret",
+    isVerified: true,
     isComposer: false,
     role: UserRole.Admin
   },
@@ -35,6 +36,7 @@ export const UserSeed = [
     email: "user5@mail.com",
     password: "user5secret",
     isComposer: true,
+    isVerified: true,
     typeOfCompositions: [CompositionType.Sacred],
     role: UserRole.Admin
   },
@@ -44,6 +46,7 @@ export const UserSeed = [
     lastName: "Happy6",
     email: "user6@mail.com",
     password: "user6secret",
+    isVerified: true,
     isComposer: false,
   },
   {
@@ -62,6 +65,7 @@ export const UserSeed = [
     email: "user8@mail.com",
     password: "user8secret",
     isComposer: false,
+    isVerified: true,
     role: UserRole.Admin
   },
   {
@@ -71,6 +75,7 @@ export const UserSeed = [
     email: "user9@mail.com",
     password: "user9secret",
     isComposer: false,
+    isVerified: true,
     role: UserRole.Superadmin
   }
 ];

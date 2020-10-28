@@ -5,21 +5,18 @@ import { User } from "../db/entities/User";
 import {
   CompositionsRequiredError,
   InvalidInputCompositionError,
-  MusicNotFoundError,
-  PasswordsDoNotMatchError,
   UnAuthorizedError,
+  UnknownError,
   UserNotFoundError,
 } from "./serviceUtils/errors";
 import { UserInterface } from "../context/user.interface";
 import { UserRole } from "../utilities/UserRoles";
-import { MusicNotRetrieved, UserNotRetrieved } from "../db/dbUtils/DbErrors";
+import { UserNotRetrieved } from "../db/dbUtils/DbErrors";
 import { MyError } from "./serviceUtils/MyError";
-import * as jwt from "jsonwebtoken";
 import { getConfirmationUrl } from "./serviceUtils/getConfirmationUrl";
 import { sendEmail } from "./serviceUtils/sendEmail";
 import { getPasswordConfirmationUrl } from "./serviceUtils/getPasswordConfirmationUrl";
 import { UserComposition } from "./serviceUtils/interfaces/UserComposition.interface";
-import { ChangePassword } from "./serviceUtils/interfaces/ChangePassword.interface";
 
 @Service()
 export class UserService {
@@ -27,9 +24,16 @@ export class UserService {
   private readonly userRepository: UserRepository;
 
   private async getUser(id: string): Promise<User> {
-    const user = await this.userRepository.findUserById(id);
-    if (!user) throw new UserNotFoundError(id);
-    return user;
+    try {
+      const user = await this.userRepository.findById(id);
+      if (!user) throw new UserNotFoundError(id);
+      return user;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   public async updateUserComposition(
@@ -58,7 +62,10 @@ export class UserService {
     } catch (error) {
       if (error instanceof UserNotRetrieved)
         throw new UserNotFoundError(user.id);
-      throw new MyError(error.message);
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
     }
   }
 
@@ -70,110 +77,45 @@ export class UserService {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
-      return await this.userRepository.changeUserRole(userToChangeId, newRole);
+      return await this.userRepository.changeRole(userToChangeId, newRole);
     } catch (error) {
       if (error instanceof UserNotRetrieved)
         throw new UserNotFoundError(userToChangeId);
-      throw new MyError(error.message);
-    }
-  }
+      if (error instanceof MyError) throw error;
 
-  public async downloadMusic(
-    user: UserInterface,
-    musicId: string
-  ): Promise<boolean> {
-    try {
-      if (!user) throw new UnAuthorizedError();
-      return this.userRepository.userDownloadedMusic(user.id, musicId);
-    } catch (error) {
-      if (error instanceof UserNotRetrieved)
-        throw new UserNotFoundError(user.id);
-      if (error instanceof MusicNotRetrieved)
-        throw new MusicNotFoundError(user.id);
-      throw new MyError(error.message);
+      console.log(error);
+      throw new UnknownError();
     }
   }
 
   async changeEmail(user: UserInterface, newEmail: string): Promise<boolean> {
-    if (!user) throw new UnAuthorizedError();
-    await sendEmail(newEmail, getConfirmationUrl(user.id));
-    return true;
-  }
-
-  public async confirmUser(token: string): Promise<boolean> {
-    let jwtPayload: string | any;
-
-    if (!token) {
-      return false;
-    }
-
-    try {
-      jwtPayload = jwt.verify(token, process.env.JWT_SECRET);
-      if (!jwtPayload) {
-        return false;
-      }
-      jwtPayload.user.email
-        ? await this.userRepository.updateUser(jwtPayload.user.id, {
-            isVerified: true,
-            email: jwtPayload.user.email,
-          })
-        : await this.userRepository.updateUser(jwtPayload.user.id, {
-            isVerified: true,
-          });
-
-      return true;
-    } catch (error) {
-      console.log(error);
-      throw new MyError(error.message);
-    }
-  }
-
-  async changePassword(
-    user: UserInterface,
-    input: ChangePassword
-  ): Promise<boolean> {
     try {
       if (!user) throw new UnAuthorizedError();
+      console.log(user);
+      await sendEmail(newEmail, getConfirmationUrl(user.id, newEmail));
+      return true;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
 
-      if (input.newPassword !== input.confirmNewPassword)
-        throw new PasswordsDoNotMatchError();
-      if (
-        !(await this.userRepository.findUserPassword(
-          user.id,
-          input.oldPassword
-        ))
-      )
-        throw new MyError("incorrect password, cannot change password");
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
 
+  async changePassword(user: UserInterface): Promise<boolean> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      const password = await this.userRepository.findPasswordById(user.id);
       await sendEmail(
         user.email,
-        getPasswordConfirmationUrl(user.id, input.newPassword)
+        getPasswordConfirmationUrl(user.id, password)
       );
       return true;
     } catch (error) {
       if (error instanceof MyError) throw error;
-      throw new MyError(error.message);
-    }
-  }
 
-  public async confirmChangedPassword(token: string): Promise<boolean> {
-    let jwtPayload: string | any;
-
-    if (!token) {
-      return false;
+      console.log(error);
+      throw new UnknownError();
     }
-
-    try {
-      jwtPayload = jwt.verify(token, process.env.JWT_SECRET);
-      if (!jwtPayload) {
-        return false;
-      }
-      await this.userRepository.updateUser(jwtPayload.user.id, {
-        password: jwtPayload.user.password,
-      });
-    } catch (error) {
-      throw new MyError(error.message);
-    }
-    return true;
   }
 }

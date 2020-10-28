@@ -1,5 +1,4 @@
 import {
-  Connection,
   EntitySubscriberInterface,
   EventSubscriber,
   InsertEvent,
@@ -7,26 +6,19 @@ import {
 } from "typeorm";
 
 import { User } from "../entities/User";
-import { createHmac } from "crypto";
-
+import Auth from '../../utilities/Auth';
 @EventSubscriber()
 export class UserSubscriber implements EntitySubscriberInterface<User> {
   listenTo() {
     return User;
   }
 
-  beforeInsert(event: InsertEvent<User>) {
-    event.entity.password = createHmac("sha256", event.entity.password).digest(
-      "hex"
-    );
+  async beforeInsert(event: InsertEvent<User>) {
+    event.entity.password = await Auth.hashPassword(event.entity.password);
   }
 
-  beforeUpdate(event: UpdateEvent<User>) {
-    if (event.entity.password !== event.databaseEntity.password) {
-      event.entity.password = createHmac(
-        "sha256",
-        event.entity.password
-      ).digest("hex");
-    }
+  async beforeUpdate(event: UpdateEvent<User>) {
+    if (event.entity.password !== event.databaseEntity.password)
+      event.entity.password = await Auth.hashPassword(event.entity.password);
   }
 }

@@ -1,8 +1,7 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { UserInterface } from "../context/user.interface";
-import { CategoryNotRetrieved } from '../db/dbUtils/DbErrors';
-import { MyDbError } from "../db/dbUtils/MyDbError";
+import { CategoryNotRetrieved } from "../db/dbUtils/DbErrors";
 import { Category } from "../db/entities/Category";
 import { CreateCategory } from "../db/inputInterfaces/CreateCategory";
 import { UpdateCategory } from "../db/inputInterfaces/UpdateCategory";
@@ -12,8 +11,9 @@ import {
   CategoryExistsError,
   CategoryNotFoundError,
   UnAuthorizedError,
+  UnknownError,
 } from "./serviceUtils/errors";
-import { MyError } from './serviceUtils/MyError';
+import { MyError } from "./serviceUtils/MyError";
 
 @Service()
 export class CategoryService {
@@ -21,17 +21,38 @@ export class CategoryService {
   private readonly categoryRepository: CategoryRepository;
 
   public async getTreeCategories(): Promise<Category[]> {
-    return this.categoryRepository.findTrees();
+    try {
+      return this.categoryRepository.findTrees();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   public async getCategories(): Promise<Category[]> {
-    return this.categoryRepository.find();
+    try {
+      return this.categoryRepository.find();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   public async getCategory(id: string): Promise<Category> {
-    const cat =  this.categoryRepository.findCategoryById(id);
-    if(!cat) throw new CategoryNotFoundError(id);
-    return cat;
+    try {
+      const cat = this.categoryRepository.findCategoryById(id);
+      if (!cat) throw new CategoryNotFoundError(id);
+      return cat;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   public async createCategory(
@@ -47,7 +68,10 @@ export class CategoryService {
     } catch (error) {
       if (error instanceof CategoryNotRetrieved)
         throw new CategoryNotFoundError(data.parentId);
-      throw new MyError(error.message);
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
     }
   }
 
@@ -65,7 +89,10 @@ export class CategoryService {
       }
       return await this.categoryRepository.updateCategory(id, data);
     } catch (error) {
-        throw new MyError(error.message);
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
     }
   }
 }

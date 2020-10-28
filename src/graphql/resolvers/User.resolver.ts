@@ -36,12 +36,11 @@ export class UserResolver {
   @Mutation(() => BooleanPayload)
   async changeEmail(
     @Ctx() { user }: Context,
-    @Arg("email") emailInput: EmailInput
+    @Arg("newEmail") emailInput: EmailInput
   ) {
     try {
       const booleanType = new BooleanType();
       const done = await this.userService.changeEmail(user, emailInput.email);
-
       booleanType.done = done;
       return booleanType;
     } catch (e) {
@@ -52,15 +51,11 @@ export class UserResolver {
   }
 
   @Mutation(() => BooleanPayload)
-  async changePassword(
-    @Ctx() { user }: Context,
-    @Arg("input") input: ChangePasswordInput
-  ) {
+  async changePassword(@Ctx() { user }: Context) {
     try {
       const booleanType = new BooleanType();
-      const done = await this.userService.changePassword(user, input);
+      const done = await this.userService.changePassword(user);
       booleanType.done = done;
-      
       return booleanType;
     } catch (e) {
       if (e instanceof MyError) {
@@ -84,23 +79,6 @@ export class UserResolver {
 
       booleanType.done = done;
       return booleanType;
-    } catch (e) {
-      if (e instanceof MyError) {
-        return new UserError(e.message);
-      }
-    }
-  }
-
-  @Mutation(() => BooleanPayload)
-  async downloadMusic(
-    @Ctx() { user }: Context,
-    @Arg("id", () => ID) musicId: string
-  ) {
-    try {
-      const booleanType = new BooleanType();
-      const done = await this.userService.downloadMusic(user, musicId);
-      booleanType.done = done;
-      return done;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

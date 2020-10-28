@@ -2,8 +2,9 @@ import { User } from "../entities/User";
 import { ScoreType } from "../../utilities/ScoreType";
 import { Category } from "../entities/Category";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
-import { Field, ID, Int } from 'type-graphql';
+import { Field, ID, Int, ObjectType } from 'type-graphql';
 
+@ObjectType()
 export class MusicDetails {
   @Field(() => ID)
   readonly id: string;

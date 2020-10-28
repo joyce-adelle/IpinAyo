@@ -1,4 +1,4 @@
-import { EntityRepository, Repository } from "typeorm";
+import { Connection, EntityRepository, Repository } from "typeorm";
 import { Music } from "../entities/Music";
 import { CreateMusic } from "../inputInterfaces/CreateMusic";
 import { UpdateMusic } from "../inputInterfaces/UpdateMusic";
@@ -6,31 +6,37 @@ import { UserRepository } from "./UserRepository";
 import { UserRole } from "../../utilities/UserRoles";
 import { CategoryRepository } from "./CategoryRepository";
 import { RelatedPhrasesRepository } from "./RelatedPhrasesRepository";
-import { access } from "fs";
-import { F_OK } from "constants";
-import { InjectRepository } from "typeorm-typedi-extensions";
+import { InjectConnection } from "typeorm-typedi-extensions";
 import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 import { MyDbError } from "../dbUtils/MyDbError";
 import { MusicDetails } from "../subEntities/MusicDetails";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
-import { Inject } from "typedi";
 
 @EntityRepository(Music)
 export class MusicRepository extends Repository<Music> {
-  @Inject()
   private readonly userRepository: UserRepository;
-
-  @InjectRepository()
   private readonly categoryRepository: CategoryRepository;
-
-  @InjectRepository()
   private readonly relatedPhrasesRepository: RelatedPhrasesRepository;
+
+  constructor(
+    @InjectConnection()
+    private readonly connection: Connection
+  ) {
+    super();
+    this.userRepository = this.connection.getCustomRepository(UserRepository);
+    this.categoryRepository = this.connection.getCustomRepository(
+      CategoryRepository
+    );
+    this.relatedPhrasesRepository = this.connection.getCustomRepository(
+      RelatedPhrasesRepository
+    );
+  }
 
   async createAndSave(music: CreateMusic): Promise<Music> {
     let musicDet = new Music();
     Object.assign(musicDet, music);
 
-    let uploadedBy = await this.userRepository.findUserById(music.uploadedById);
+    let uploadedBy = await this.userRepository.findById(music.uploadedById);
     if (!uploadedBy) throw new UserNotRetrieved(music.uploadedById);
 
     let categories = await this.categoryRepository.findByIds(music.categoryIds);
@@ -53,6 +59,7 @@ export class MusicRepository extends Repository<Music> {
     if (uploadedBy.role != UserRole.User) {
       musicDet.isVerified = true;
       musicDet.verifiedBy = uploadedBy;
+      musicDet.verifiedAt = new Date();
     }
 
     return this.save(musicDet);
@@ -80,6 +87,12 @@ export class MusicRepository extends Repository<Music> {
   async findById(id: string): Promise<Music> {
     return this.findOne({
       where: { id: id },
+    });
+  }
+
+  async findUploadsByUser(userId: string): Promise<Music[]> {
+    return this.find({
+      where: { uploadedBy: userId },
     });
   }
 
@@ -238,12 +251,37 @@ export class MusicRepository extends Repository<Music> {
     if (!MusicRepository.isMusic(musicDet)) {
       throw new MusicNotRetrieved(id);
     }
-    Object.assign(musicDet, music);
-    const user = await this.userRepository.findUserById(updatedById);
+    const user = await this.userRepository.findById(updatedById);
+    if (!user) throw new UserNotRetrieved(updatedById);
     musicDet.updatedBy = user;
-    if (music.isVerified) musicDet.verifiedBy = user;
-
+    if (music.isVerified && !musicDet.isVerified) {
+      musicDet.verifiedBy = user;
+      musicDet.verifiedAt = new Date();
+    }
+    if (music.isVerified === false && musicDet.isVerified) {
+      musicDet.verifiedAt = null;
+      musicDet.verifiedBy = null;
+    }
+    Object.assign(musicDet, music);
     return this.save(musicDet);
+  }
+
+  async userDownloadedMusic(userId: string, musicId: string): Promise<boolean> {
+    let userDet = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ["downloads"],
+    });
+    if (!userDet) throw new UserNotRetrieved(userId);
+
+    let music = await this.findById(musicId);
+    if (!music) throw new MusicNotRetrieved(musicId);
+
+    userDet.downloads.push(music);
+    music.numberOfDownloads += 1;
+
+    return (await this.userRepository.save(userDet)) && (await this.save(music))
+      ? true
+      : false;
   }
 
   static isMusic(music: any): music is Music {

@@ -1,11 +1,12 @@
 import * as nodemailer from "nodemailer";
 
-export async function sendEmail(email: string, url?: string, password?: string) {
+export async function sendEmail(email: string, url: string, password?: string) {
   const account = await nodemailer.createTestAccount();
   console.log(account);
 
   const transporter = nodemailer.createTransport({
     service:'Ethereal',
+    host: account.smtp.host,
     secure: account.smtp.secure, // true for 465, false for other ports
     auth: {
       user: account.user, // generated ethereal user
@@ -18,9 +19,9 @@ export async function sendEmail(email: string, url?: string, password?: string) 
     to: email, // list of receivers
     subject: "Hello ✔", // Subject line
     text: "Hello world?", // plain text body
-    html: password ? `Your password is ${password}` : `<a href="${url}">${url}</a>` // html body
+    html: password ? `<a href="${url}">${url}</a> <br /> <br /> Your one time password is ${password}` : `<a href="${url}">${url}</a>` // html body
   };
-  console.log(await transporter.verify())
+
   const info = await transporter.sendMail(mailOptions);
 
   console.log("Message sent: %s", info.messageId);

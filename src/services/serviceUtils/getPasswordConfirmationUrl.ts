@@ -1,7 +1,7 @@
-import * as jwt from "jsonwebtoken";
+import {sign} from "jsonwebtoken";
 
 export const getPasswordConfirmationUrl =  (userId: string, password: string) => {
-  const token = jwt.sign(
+  const token = sign(
     {
       user: {
         id: userId,
@@ -12,5 +12,5 @@ export const getPasswordConfirmationUrl =  (userId: string, password: string) =>
     { expiresIn: "24h" }
   );
 
-  return `http://localhost:4000/user/confirm/${token}`;
+  return `http://localhost:3000/user/resetpassword/${token}`;
 };

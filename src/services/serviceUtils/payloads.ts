@@ -1,7 +1,9 @@
 import { ObjectType, Field } from "type-graphql";
 import { Category } from '../../db/entities/Category';
+import { Music } from '../../db/entities/Music';
 import { RelatedPhrases } from "../../db/entities/RelatedPhrases";
 import { User } from "../../db/entities/User";
+import { MusicDetails } from '../../db/subEntities/MusicDetails';
 import { userResponse } from "../../utilities/genericTypes";
 
 @ObjectType()
@@ -27,3 +29,7 @@ export const RelatedPhrasePayload = userResponse(
 export const RelatedPhrasesPayload = [RelatedPhrases];
 export const CategoriesPayload = [Category];
 export const CategoryPayload = userResponse("CategoryPayload", Category);
+export const MusicPayload = [Music];
+export const MusicDetailsPayload = userResponse("MusicDetailsPayload", MusicDetails);
+export const SingleMusicPayload = userResponse("SingleMusicPayload", Music);
+

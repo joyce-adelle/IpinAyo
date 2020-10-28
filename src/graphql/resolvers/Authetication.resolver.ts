@@ -23,10 +23,7 @@ export class AuthResolver {
   public async login(@Arg("credentials") credentials: LoginUserInput) {
     try {
       const loginType = new LoginType();
-      const token = await this.authService.login(
-        credentials.email,
-        credentials.password
-      );
+      const token = await this.authService.login(credentials);
 
       loginType.token = token;
       return loginType;

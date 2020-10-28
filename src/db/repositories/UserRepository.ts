@@ -2,25 +2,19 @@ import { EntityRepository, Repository } from "typeorm";
 import { User } from "../entities/User";
 import { CreateUser } from "../inputInterfaces/CreateUser";
 import { UpdateUser } from "../inputInterfaces/UpdateUser";
-import { createHmac } from "crypto";
-import { LoginUser } from "../inputInterfaces/LoginUser";
-import { MusicRepository } from "./MusicRepository";
 import { UserRole } from "../../utilities/UserRoles";
-import { InjectRepository } from "typeorm-typedi-extensions";
-import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
+import { UserNotRetrieved } from "../dbUtils/DbErrors";
+import { Music } from "../entities/Music";
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
-  @InjectRepository()
-  private readonly musicRepository: MusicRepository;
-
   async createAndSave(user: CreateUser): Promise<User> {
     let userDet = new User();
     Object.assign(userDet, user);
     return this.save(userDet);
   }
 
-  async findUserById(id: string): Promise<User> {
+  async findById(id: string): Promise<User> {
     return this.findOne({
       where: { id: id },
     });
@@ -39,7 +33,7 @@ export class UserRepository extends Repository<User> {
   }
 
   async updateUser(id: string, user: UpdateUser): Promise<User> {
-    let userDet = await this.findUserById(id);
+    let userDet = await this.findById(id);
     if (!UserRepository.isUser(userDet)) throw new UserNotRetrieved(id);
 
     Object.assign(userDet, user);
@@ -47,51 +41,36 @@ export class UserRepository extends Repository<User> {
     return this.save(userDet);
   }
 
-  async userDownloadedMusic(userId: string, musicId: string): Promise<boolean> {
+  async findByEmailAddPassword(email: string): Promise<User> {
+    return await this.findOne({
+      where: {
+        email: email,
+      },
+      select: ["id", "role", "username", "email", "password"],
+    });
+  }
+
+  async findPasswordById(id: string): Promise<string> {
+    const user = await this.findOne({
+      where: {
+        id: id,
+      },
+      select: ["password"],
+    });
+    return user.password;
+  }
+
+  async findDownloads(userId: string): Promise<Music[]> {
     let userDet = await this.findOne({
       where: { id: userId },
       relations: ["downloads"],
+      select: ["id"],
     });
-    if (!UserRepository.isUser(userDet)) throw new UserNotRetrieved(userId);
-
-    let music = await this.musicRepository.findById(musicId);
-    if (!music) throw new MusicNotRetrieved(musicId);
-
-    userDet.downloads.push(music);
-    music.numberOfDownloads = ++music.numberOfDownloads;
-    let downloaded = await this.save(userDet);
-    await this.musicRepository.save(music);
-    return downloaded ? true : false;
+    return userDet.downloads;
   }
 
-  async findUserByEmailAndPassword(loginUser: LoginUser): Promise<User> {
-    return this.findOne({
-      where: {
-        email: loginUser.email,
-        password: createHmac("sha256", loginUser.password).digest("hex"),
-      },
-    });
-  }
-
-  async findUserPassword(id: string, oldPasword: string): Promise<User> {
-    return this.findOne({
-      where: {
-        id: id,
-        password: createHmac("sha256", oldPasword).digest("hex"),
-      },
-    });
-  }
-
-  async getUserPasswordByEmail(email: string): Promise<string> {
-    const user = await this.findOne({
-      where: { email: email },
-      select: ["password"],
-    });
-    return user ? createHmac("sha256", user.password).digest("hex") : "";
-  }
-
-  async changeUserRole(userId: string, newRole: UserRole): Promise<boolean> {
-    let user = await this.findUserById(userId);
+  async changeRole(userId: string, newRole: UserRole): Promise<boolean> {
+    let user = await this.findById(userId);
     if (!UserRepository.isUser(user)) throw new UserNotRetrieved(userId);
 
     user.role = newRole;

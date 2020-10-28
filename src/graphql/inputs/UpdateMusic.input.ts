@@ -1,32 +1,26 @@
 import { InputType, Field, ID } from "type-graphql";
 import { ScoreType } from "../../utilities/ScoreType";
 import { GraphQLUpload, FileUpload } from "graphql-upload";
-import { ArrayNotEmpty } from 'class-validator';
 
 @InputType()
-export class UploadMusicInput{
-  @Field(() => GraphQLUpload)
-  scoreFile: FileUpload;
+export class UpdateMusicInput {
+  @Field(() => String, { nullable: true })
+  title?: string;
 
-  @Field(() => String)
-  title: string;
+  @Field(() => String, { nullable: true })
+  description?: string;
 
-  @Field(() => String)
-  description: string;
+  @Field(() => ScoreType, { nullable: true })
+  scoreType?: ScoreType;
 
-  @Field(() => ScoreType)
-  scoreType: ScoreType;
+  @Field(() => [String], { nullable: true })
+  languages?: string[];
 
-  @Field(() => [String])
-  languages: string[];
+  @Field(() => [ID], { nullable: true })
+  relatedPhrasesIds?: string[];
 
-  @Field(() => [ID])
-  @ArrayNotEmpty()
-  relatedPhrasesIds: string[];
-
-  @Field(() => [ID])
-  @ArrayNotEmpty()
-  categoryIds: string[];
+  @Field(() => [ID], { nullable: true })
+  categoryIds?: string[];
 
   @Field(() => GraphQLUpload, { nullable: true })
   audioFile?: FileUpload;
@@ -43,11 +37,9 @@ export class UploadMusicInput{
   @Field(() => String, { nullable: true })
   yearOfArrangement?: string;
 
-  scorePath: string;
-  audioPath?: string;
-  scoreFilename: string;
-  audioFilename?: string;
+  @Field(() => Boolean, { nullable: true })
+  isVerified?: boolean;
 
-  uploadedById: string;
-  score: string;
+  audioPath?: string;
+  audioFilename?: string;
 }

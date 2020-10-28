@@ -9,66 +9,113 @@ import { MyError } from "./serviceUtils/MyError";
 import { UserInterface } from "../context/user.interface";
 import { Music } from "../db/entities/Music";
 import { UserRole } from "../utilities/UserRoles";
-import { UnAuthorizedError } from "./serviceUtils/errors";
+import {
+  MusicNotFoundError,
+  UnAuthorizedError,
+  UnknownError,
+  UserNotFoundError,
+} from "./serviceUtils/errors";
 import { UpdateMusic } from "../db/inputInterfaces/UpdateMusic";
 import { MusicDetails } from "../db/subEntities/MusicDetails";
+import { UserNotRetrieved, MusicNotRetrieved } from "../db/dbUtils/DbErrors";
 
 @Service()
-export class MusicResolver {
+export class MusicService {
   @InjectRepository()
   private readonly musicRepository: MusicRepository;
 
   async allMusic(): Promise<Music[]> {
-    return this.musicRepository.all();
+    try {
+      return this.musicRepository.all();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
-  async allUnverifiedMusic(): Promise<Music[]> {
-    return this.musicRepository.allUnverified();
+  async allUnverifiedMusic(user: UserInterface): Promise<Music[]> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      if (user.role == UserRole.User) throw new UnAuthorizedError();
+      return this.musicRepository.allUnverified();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   async musicDetails(musicId: string): Promise<MusicDetails> {
-    return this.musicRepository.findDetailsById(musicId);
+    try {
+      const det = this.musicRepository.findDetailsById(musicId);
+      if (!det) throw new MusicNotFoundError(musicId);
+      return det;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
-  async uploadMusic(user: UserInterface, music: UploadMusic): Promise<Music> {
-    const musicDet = (music as unknown) as CreateMusic;
-    console.log(musicDet);
-    musicDet.uploadedById = user.id;
-    access(music.scorePath, F_OK, (err) => {
-      if (err) {
-        throw new MyError("Score not found");
-      } else {
-        musicDet.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
-      }
-    });
-
-    if (music.audioPath) {
-      access(music.audioPath, F_OK, (err) => {
+  async uploadMusic(user: UserInterface, music: UploadMusic): Promise<boolean> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      music.uploadedById = user.id;
+      access(music.scorePath, F_OK, (err) => {
         if (err) {
-          musicDet.audio = null;
+          console.log(err);
+          throw new MyError("Score not found");
         } else {
-          musicDet.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
+          music.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
         }
       });
-    }
 
-    return this.musicRepository.createAndSave(musicDet);
+      if (music.audioPath) {
+        access(music.audioPath, F_OK, (err) => {
+          if (err) {
+            music.audio = null;
+          } else {
+            music.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
+          }
+        });
+      }
+      console.log("herrrerererererere   ", music.score);
+      console.log("herrrerererererere   ", music.audio);
+      return (await this.musicRepository.createAndSave(music)) ? true : false;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   async deleteMusic(music: Music, user: UserInterface): Promise<boolean> {
+    if (!user) throw new UnAuthorizedError();
     if (user.role == UserRole.User) throw new UnAuthorizedError();
-    unlink(music.score, function (err) {
-      if (err) throw err;
-      console.log("File deleted!");
-    });
-    if (music.audio) {
-      unlink(music.audio, function (err) {
+    try {
+      unlink(music.score, function (err) {
         if (err) throw err;
         console.log("File deleted!");
       });
-    }
+      if (music.audio) {
+        unlink(music.audio, function (err) {
+          if (err) throw err;
+          console.log("File deleted!");
+        });
+      }
 
-    return (await this.musicRepository.remove(music)) ? true : false;
+      return (await this.musicRepository.remove(music)) ? true : false;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   async updateMusic(
@@ -76,7 +123,34 @@ export class MusicResolver {
     user: UserInterface,
     music: UpdateMusic
   ): Promise<Music> {
-    if (user.role == UserRole.User) throw new UnAuthorizedError();
-    return this.musicRepository.updateMusic(musicId, user.id, music);
+    try {
+      if (!user) throw new UnAuthorizedError();
+      if (user.role == UserRole.User) throw new UnAuthorizedError();
+      return this.musicRepository.updateMusic(musicId, user.id, music);
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
+
+  public async downloadMusic(
+    user: UserInterface,
+    musicId: string
+  ): Promise<boolean> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      return this.musicRepository.userDownloadedMusic(user.id, musicId);
+    } catch (error) {
+      if (error instanceof UserNotRetrieved)
+        throw new UserNotFoundError(user.id);
+      if (error instanceof MusicNotRetrieved)
+        throw new MusicNotFoundError(user.id);
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 }

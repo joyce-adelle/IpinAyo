@@ -7,7 +7,7 @@ export interface UpdateMusic {
   languages?: string[];
   relatedPhrasesIds?: string[];
   categoryIds?: string[];
-  audioFile?: File;
+  audio?: string;
   composers?: string;
   yearOfComposition?: string;
   arrangers?: string;

@@ -1,7 +1,10 @@
 import { CreateMusic } from "../../../db/inputInterfaces/CreateMusic";
 import { ScoreType } from "../../../utilities/ScoreType";
 
-export class UploadMusic {
+export interface UploadMusic{
+  score: string;
+  uploadedById: string;
+  audio?: string;
   title: string;
   description: string;
   scoreType: ScoreType;

@@ -15,9 +15,9 @@ import { Category } from "./Category";
 import { RelatedPhrases } from "./RelatedPhrases";
 import { Field, ID, Int, ObjectType } from "type-graphql";
 
+@ObjectType()
 @Entity()
 @Index("IDX_691e99699b0d2dfaaa7a6a83c5", { synchronize: false })
-@ObjectType()
 export class Music {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
@@ -30,7 +30,7 @@ export class Music {
   })
   score: string;
 
-  @Field(() => String, {nullable: true})
+  @Field(() => String, { nullable: true })
   @Column({
     nullable: true,
   })
@@ -44,23 +44,23 @@ export class Music {
   @Column({ type: "text" })
   description: string;
 
-  @Field(() => String, {nullable: true})
+  @Field(() => String, { nullable: true })
   @Column({
     nullable: true,
   })
   composers: string;
 
-  @Field(() => String, {nullable: true})
+  @Field(() => String, { nullable: true })
   @Column({ type: "char", nullable: true, length: 4 })
   yearOfComposition: string;
 
-  @Field(() => String, {nullable: true})
+  @Field(() => String, { nullable: true })
   @Column({
     nullable: true,
   })
   arrangers: string;
 
-  @Field(() => String, {nullable: true})
+  @Field(() => String, { nullable: true })
   @Column({ type: "char", nullable: true, length: 4 })
   yearOfArrangement: string;
 
@@ -114,7 +114,7 @@ export class Music {
   @ManyToOne((type) => User)
   updatedBy: User;
 
-  @Field(() => Date, {nullable: true})
+  @Field(() => Date, { nullable: true })
   @Column({
     type: "timestamp",
     nullable: true,

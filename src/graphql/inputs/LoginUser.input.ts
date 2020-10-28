@@ -1,4 +1,4 @@
-import { LoginUser } from "../../db/inputInterfaces/LoginUser";
+import { LoginUser } from "../../services/serviceUtils/interfaces/LoginUser.interface";
 import { Field, InputType } from "type-graphql";
 import { IsEmail, IsString, Length } from "class-validator";
 

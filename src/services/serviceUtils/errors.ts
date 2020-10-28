@@ -111,3 +111,39 @@ export class PasswordsDoNotMatchError extends MyError {
     super(message);
   }
 }
+
+export class PasswordError extends MyError {
+  constructor() {
+    const message = "incorrect input password, cannot change password";
+    super(message);
+  }
+}
+
+export class AlreadyConfirmedError extends MyError {
+  constructor() {
+    const message = "already verified please re-login";
+    super(message);
+  }
+}
+
+export class ExpiredError extends MyError {
+  constructor() {
+    const message = "session or link expired.";
+    super(message);
+  }
+}
+
+export class InvalidLinkError extends MyError {
+  constructor() {
+    const message = "invalid link";
+    super(message);
+  }
+}
+
+export class UnknownError extends MyError {
+  constructor() {
+    const message =
+      "Error occurred while processing request, plaese try again.";
+    super(message);
+  }
+}

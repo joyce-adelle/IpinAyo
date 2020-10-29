@@ -1,16 +1,11 @@
-import { LoginUser } from "../../services/serviceUtils/interfaces/LoginUser.interface";
 import { Field, InputType } from "type-graphql";
-import { IsEmail, IsString, Length } from "class-validator";
+import { IsString, Length } from "class-validator";
+import { EmailInput } from "./Email.input";
 
 @InputType()
-export class LoginUserInput implements LoginUser {
-  @Field(() => String)
-  @IsEmail()
-  @IsString()
-  email: string;
-
+export class LoginUserInput extends EmailInput {
   @Field(() => String)
   @IsString()
-  @Length(8, 30)
+  @Length(8, 15)
   password: string;
 }

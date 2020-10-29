@@ -75,29 +75,31 @@ export class Music {
   })
   scoreType: ScoreType;
 
-  @Field(() => Boolean)
   @Column({ default: false })
   isVerified: boolean;
 
   @Field(() => Int)
-  @Column({ type: "bigint", default: 0 })
   numberOfDownloads: number;
 
-  @ManyToOne((type) => User, (user) => user.uploads)
-  uploadedBy: User;
-
-  @ManyToMany((type) => Category, (category) => category.relatedMusic)
+  @Field(() => [Category])
+  @ManyToMany(() => Category, (category) => category.relatedMusic)
   @JoinTable()
   categories: Category[];
 
+  @Field(() => [RelatedPhrases])
   @ManyToMany(
-    (type) => RelatedPhrases,
+    () => RelatedPhrases,
     (relatedPhrases) => relatedPhrases.relatedMusic
   )
   @JoinTable()
   relatedPhrases: RelatedPhrases[];
 
-  @Field(() => Date)
+  @ManyToMany(() => User, (user) => user.downloads)
+  downloadedBy: User[];
+
+  @ManyToOne(() => User, (user) => user.uploads)
+  uploadedBy: User;
+
   @CreateDateColumn({
     type: "timestamp",
     default: () => "CURRENT_TIMESTAMP(6)",
@@ -111,10 +113,9 @@ export class Music {
   })
   updatedAt: Date;
 
-  @ManyToOne((type) => User)
+  @ManyToOne(() => User)
   updatedBy: User;
 
-  @Field(() => Date, { nullable: true })
   @Column({
     type: "timestamp",
     nullable: true,
@@ -122,6 +123,6 @@ export class Music {
   })
   verifiedAt: Date;
 
-  @ManyToOne((type) => User)
+  @ManyToOne(() => User)
   verifiedBy: User;
 }

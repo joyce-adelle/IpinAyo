@@ -1,8 +1,5 @@
 import { InputType, Field } from "type-graphql";
-import {
-  IsEmail,
-  IsString,
-} from "class-validator";
+import { IsEmail, IsString } from "class-validator";
 
 @InputType()
 export class EmailInput {

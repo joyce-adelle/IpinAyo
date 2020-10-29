@@ -1,10 +1,9 @@
 import { InputType, Field, ID } from "type-graphql";
-import { UpdateRelatedPhrases } from "../../db/inputInterfaces/UpdateRelatedPhrases";
 import { IsId } from "../validations/Id.validation";
 import { IsString, MinLength, IsOptional, Length } from "class-validator";
 
 @InputType()
-export class UpdateRelatedPhrasesInput implements UpdateRelatedPhrases {
+export class UpdateRelatedPhrasesInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()

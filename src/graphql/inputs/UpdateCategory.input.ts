@@ -1,10 +1,9 @@
-import { UpdateCategory } from "../../db/inputInterfaces/UpdateCategory";
 import { InputType, Field, ID } from "type-graphql";
-import { IsString, MinLength, IsOptional} from "class-validator";
+import { IsString, MinLength, IsOptional } from "class-validator";
 import { IsId } from "../validations/Id.validation";
 
 @InputType()
-export class UpdateCategoryInput implements UpdateCategory {
+export class UpdateCategoryInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()

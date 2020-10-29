@@ -4,9 +4,9 @@ import {
   Arg,
   Query,
   Ctx,
-  ID,
   Root,
   FieldResolver,
+  Args,
 } from "type-graphql";
 import { createWriteStream, unlinkSync } from "fs";
 import { UploadMusicInput } from "../inputs/UploadMusic.input";
@@ -24,6 +24,7 @@ import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
 import { UpdateMusicInput } from "../inputs/UpdateMusic.input";
 import { Music } from "../../db/entities/Music";
+import { IdArgs } from "../arguments/id.args";
 
 const Store = ({ stream, path }) => {
   return new Promise((resolve, reject) =>
@@ -55,10 +56,10 @@ export class MusicResolver {
     return this.musicService.allUnverifiedMusic(user);
   }
 
-  @FieldResolver(() => MusicDetailsPayload)
-  async musicDetails(@Root() music: Music) {
+  @Query(() => SingleMusicPayload)
+  async getMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
-      return await this.musicService.musicDetails(music.id);
+      return await this.musicService.getMusic(id, user);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -66,11 +67,22 @@ export class MusicResolver {
     }
   }
 
-  @FieldResolver(() => BooleanPayload)
-  public async deleteMusic(@Root() music: Music, @Ctx() { user }: Context) {
+  @Query(() => MusicDetailsPayload)
+  async musicDetails(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
+    try {
+      return await this.musicService.musicDetails(id, user);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
+  }
+
+  @Mutation(() => BooleanPayload)
+  public async deleteMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
       const booleanType = new BooleanType();
-      const done = await this.musicService.deleteMusic(music, user);
+      const done = await this.musicService.deleteMusic(id, user);
       booleanType.done = done;
       return booleanType;
     } catch (e) {
@@ -121,7 +133,7 @@ export class MusicResolver {
   @Mutation(() => SingleMusicPayload)
   async updateMusic(
     @Ctx() { user }: Context,
-    @Arg("id", () => ID) id: string,
+    @Args() { id }: IdArgs,
     @Arg("music") music: UpdateMusicInput
   ) {
     try {
@@ -146,13 +158,10 @@ export class MusicResolver {
   }
 
   @Mutation(() => BooleanPayload)
-  async downloadMusic(
-    @Ctx() { user }: Context,
-    @Arg("id", () => ID) musicId: string
-  ) {
+  async downloadMusic(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {
       const booleanType = new BooleanType();
-      const done = await this.musicService.downloadMusic(user, musicId);
+      const done = await this.musicService.downloadMusic(user, id);
       booleanType.done = done;
       return booleanType;
     } catch (e) {
@@ -160,5 +169,20 @@ export class MusicResolver {
         return new UserError(e.message);
       }
     }
+  }
+
+  @FieldResolver()
+  categories(@Root() music: Music) {
+    return this.musicService.getCategories(music.id);
+  }
+
+  @FieldResolver()
+  relatedPhrases(@Root() music: Music) {
+    return this.musicService.getRelatedPhrases(music.id);
+  }
+
+  @FieldResolver()
+  numberOfDownloads(@Root() music: Music) {
+    return this.musicService.getNoOfDownloads(music.id);
   }
 }

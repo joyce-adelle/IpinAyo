@@ -1,6 +1,16 @@
-import { Resolver, Query, Mutation, Arg, ID, Ctx } from "type-graphql";
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Arg,
+  Ctx,
+  Args,
+  FieldResolver,
+  Root,
+} from "type-graphql";
 import { Inject } from "typedi";
 import { Context } from "../../context/context.interface";
+import { Category } from "../../db/entities/Category";
 import { CategoryService } from "../../services/CategoryService";
 import { MyError } from "../../services/serviceUtils/MyError";
 import {
@@ -8,10 +18,11 @@ import {
   CategoryPayload,
 } from "../../services/serviceUtils/Payloads";
 import { UserError } from "../../utilities/genericTypes";
+import { IdArgs } from "../arguments/id.args";
 import { CreateCategoryInput } from "../inputs/CreateCategory.input";
 import { UpdateCategoryInput } from "../inputs/UpdateCategory.input";
 
-@Resolver()
+@Resolver(Category)
 export class CategoryResolver {
   @Inject()
   private readonly categoryService: CategoryService;
@@ -27,7 +38,7 @@ export class CategoryResolver {
   }
 
   @Query(() => CategoryPayload)
-  async category(@Arg("id", () => ID) id: string) {
+  async category(@Args() { id }: IdArgs) {
     try {
       return await this.categoryService.getCategory(id);
     } catch (e) {
@@ -54,7 +65,7 @@ export class CategoryResolver {
   @Mutation(() => CategoryPayload)
   async updateCategory(
     @Ctx() { user }: Context,
-    @Arg("id", () => ID) id: string,
+    @Args() { id }: IdArgs,
     @Arg("data") data: UpdateCategoryInput
   ) {
     try {
@@ -64,5 +75,10 @@ export class CategoryResolver {
         return new UserError(e.message);
       }
     }
+  }
+
+  @FieldResolver()
+  async children(@Root() parent: Category) {
+    return await this.categoryService.getChildren(parent);
   }
 }

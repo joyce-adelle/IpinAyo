@@ -1,10 +1,9 @@
-import { CreateCategory } from "../../db/inputInterfaces/CreateCategory";
 import { InputType, Field, ID } from "type-graphql";
 import { MinLength, IsString, IsOptional, Length } from "class-validator";
 import { IsId } from "../validations/Id.validation";
 
 @InputType()
-export class CreateCategoryInput implements CreateCategory {
+export class CreateCategoryInput {
   @Field(() => String)
   @IsString()
   @MinLength(3)

@@ -11,7 +11,7 @@ import {
 import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
 import { CompositionType } from "../../utilities/CompositionType";
-import { ObjectType, Field} from "type-graphql";
+import { ObjectType, Field } from "type-graphql";
 @Entity()
 @ObjectType()
 export class User {
@@ -24,11 +24,11 @@ export class User {
 
   @Field(() => String)
   @Column()
-  firstName: string
+  firstName: string;
 
   @Field(() => String)
   @Column()
-  lastName: string
+  lastName: string;
 
   @Field(() => String)
   @Column({ unique: true })
@@ -61,10 +61,12 @@ export class User {
   })
   typeOfCompositions: CompositionType[];
 
-  @OneToMany((type) => Music, (upload) => upload.uploadedBy)
+  @Field(() => [Music])
+  @OneToMany(() => Music, (music) => music.uploadedBy)
   uploads: Music[];
 
-  @ManyToMany((type) => Music)
+  @Field(() => [Music])
+  @ManyToMany(() => Music, (music) => music.downloadedBy)
   @JoinTable()
   downloads: Music[];
 

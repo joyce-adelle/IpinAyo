@@ -1,4 +1,12 @@
-import { Resolver, Mutation, Arg, ID, Ctx } from "type-graphql";
+import {
+  Resolver,
+  Mutation,
+  Arg,
+  Ctx,
+  FieldResolver,
+  Root,
+  Query,
+} from "type-graphql";
 import { UpdateUserCompositionInput } from "../inputs/UpdateUserComposition.input";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
 import { Inject } from "typedi";
@@ -12,12 +20,21 @@ import {
   UserPayload,
 } from "../../services/serviceUtils/Payloads";
 import { EmailInput } from "../inputs/Email.input";
-import { ChangePasswordInput } from "../inputs/ChangePassword.input";
+import { User } from "../../db/entities/User";
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
   @Inject()
   private readonly userService: UserService;
+
+  @Query(() => UserPayload)
+  async getUserDetails(@Ctx() { user }: Context) {
+    try {
+      return await this.userService.getUserDetails(user);
+    } catch (e) {
+      if (e instanceof MyError) return new UserError(e.message);
+    }
+  }
 
   @Mutation(() => UserPayload)
   async updateUserComposition(
@@ -80,9 +97,17 @@ export class UserResolver {
       booleanType.done = done;
       return booleanType;
     } catch (e) {
-      if (e instanceof MyError) {
-        return new UserError(e.message);
-      }
+      if (e instanceof MyError) return new UserError(e.message);
     }
+  }
+
+  @FieldResolver()
+  uploads(@Root() user: User) {
+    return this.userService.getUserUploads(user.id);
+  }
+
+  @FieldResolver()
+  downloads(@Root() user: User) {
+    return this.userService.getUserDownloads(user.id);
   }
 }

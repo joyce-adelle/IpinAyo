@@ -1,10 +1,10 @@
 import { InputType, Field, ID } from "type-graphql";
 import { ScoreType } from "../../utilities/ScoreType";
 import { GraphQLUpload, FileUpload } from "graphql-upload";
-import { ArrayNotEmpty } from 'class-validator';
+import { ArrayNotEmpty } from "class-validator";
 
 @InputType()
-export class UploadMusicInput{
+export class UploadMusicInput {
   @Field(() => GraphQLUpload)
   scoreFile: FileUpload;
 

@@ -9,7 +9,6 @@ import { RelatedPhrasesRepository } from "./RelatedPhrasesRepository";
 import { InjectConnection } from "typeorm-typedi-extensions";
 import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 import { MyDbError } from "../dbUtils/MyDbError";
-import { MusicDetails } from "../subEntities/MusicDetails";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
 
 @EntityRepository(Music)
@@ -77,16 +76,23 @@ export class MusicRepository extends Repository<Music> {
     });
   }
 
-  async findDetailsById(id: string): Promise<MusicDetails> {
+  async findDetailsById(id: string): Promise<Music> {
     return this.findOne({
       where: { id: id },
-      relations: ["categories", "relatedPhrases", "uploadedBy"],
+      relations: [
+        "categories",
+        "relatedPhrases",
+        "uploadedBy",
+        "updatedBy",
+        "verifiedBy",
+      ],
     });
   }
 
   async findById(id: string): Promise<Music> {
     return this.findOne({
       where: { id: id },
+      relations: ["downloadedBy"],
     });
   }
 
@@ -94,6 +100,13 @@ export class MusicRepository extends Repository<Music> {
     return this.find({
       where: { uploadedBy: userId },
     });
+  }
+
+  async findDownloadsByUser(userId: string): Promise<Music[]> {
+    return this.createQueryBuilder("music")
+      .leftJoin("music.downloadedBy", "user")
+      .where("user.id = :userId", { userId: userId })
+      .getMany();
   }
 
   async findByQueryAndCategoryIds(
@@ -222,26 +235,6 @@ export class MusicRepository extends Repository<Music> {
       .getMany();
   }
 
-  // async findByQueryAndGroup(query: string): Promise<Music[]> {
-  //   return this.createQueryBuilder("music")
-  //     .distinct(true)
-  //     .leftJoin("music.relatedPhrases", "relatedPhrases")
-  //     .where((qb) => {
-  //       const subQuery = qb
-  //         .subQuery()
-  //         .select("relatedPhrases.groupId")
-  //         .from(RelatedPhrases, "relatedPhrases")
-  //         .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
-  //           query: query.trim(),
-  //         })
-  //         .getQuery();
-  //       return "relatedPhrases.groupId IN " + subQuery;
-  //     })
-  //     .having("isVerified = true")
-  //     .orderBy("relatedPhrases.groupId")
-  //     .getMany();
-  // }
-
   async updateMusic(
     id: string,
     updatedById: string,
@@ -277,11 +270,8 @@ export class MusicRepository extends Repository<Music> {
     if (!music) throw new MusicNotRetrieved(musicId);
 
     userDet.downloads.push(music);
-    music.numberOfDownloads += 1;
 
-    return (await this.userRepository.save(userDet)) && (await this.save(music))
-      ? true
-      : false;
+    return (await this.userRepository.save(userDet)) ? true : false;
   }
 
   static isMusic(music: any): music is Music {

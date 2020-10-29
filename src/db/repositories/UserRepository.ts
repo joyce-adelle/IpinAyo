@@ -60,13 +60,11 @@ export class UserRepository extends Repository<User> {
     return user.password;
   }
 
-  async findDownloads(userId: string): Promise<Music[]> {
-    let userDet = await this.findOne({
-      where: { id: userId },
-      relations: ["downloads"],
-      select: ["id"],
-    });
-    return userDet.downloads;
+  async findNoOfDownloads(musicId: string): Promise<number> {
+    return await this.createQueryBuilder("user")
+      .leftJoin("user.downloads", "music")
+      .where("music.id = :musicId", { musicId: musicId })
+      .getCount();
   }
 
   async changeRole(userId: string, newRole: UserRole): Promise<boolean> {

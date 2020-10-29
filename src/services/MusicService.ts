@@ -1,6 +1,5 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
-import { CreateMusic } from "../db/inputInterfaces/CreateMusic";
 import { MusicRepository } from "../db/repositories/MusicRepository";
 import { access, unlink } from "fs";
 import { F_OK } from "constants";
@@ -18,21 +17,28 @@ import {
 import { UpdateMusic } from "../db/inputInterfaces/UpdateMusic";
 import { MusicDetails } from "../db/subEntities/MusicDetails";
 import { UserNotRetrieved, MusicNotRetrieved } from "../db/dbUtils/DbErrors";
+import { CategoryRepository } from "../db/repositories/CategoryRepository";
+import { RelatedPhrasesRepository } from "../db/repositories/RelatedPhrasesRepository";
+import { Category } from "../db/entities/Category";
+import { RelatedPhrases } from "../db/entities/RelatedPhrases";
+import { UserRepository } from "../db/repositories/UserRepository";
 
 @Service()
 export class MusicService {
   @InjectRepository()
   private readonly musicRepository: MusicRepository;
 
-  async allMusic(): Promise<Music[]> {
-    try {
-      return this.musicRepository.all();
-    } catch (error) {
-      if (error instanceof MyError) throw error;
+  @InjectRepository()
+  private readonly categoryRepository: CategoryRepository;
 
-      console.log(error);
-      throw new UnknownError();
-    }
+  @InjectRepository()
+  private readonly relatedPhrasesRepository: RelatedPhrasesRepository;
+
+  @InjectRepository()
+  private readonly userRepository: UserRepository;
+
+  async allMusic(): Promise<Music[]> {
+    return this.musicRepository.all();
   }
 
   async allUnverifiedMusic(user: UserInterface): Promise<Music[]> {
@@ -48,11 +54,45 @@ export class MusicService {
     }
   }
 
-  async musicDetails(musicId: string): Promise<MusicDetails> {
+  async getMusic(id: string, user: UserInterface) {
     try {
-      const det = this.musicRepository.findDetailsById(musicId);
+      const music = await this.musicRepository.findById(id);
+      if (!music) throw new MusicNotFoundError(id);
+      if (!music.isVerified) {
+        if (!user) throw new UnAuthorizedError();
+        if (user.role === UserRole.User) throw new UnAuthorizedError();
+      }
+      return music;
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
+
+  async getCategories(musicId: string): Promise<Category[]> {
+    return this.categoryRepository.findByMusicId(musicId);
+  }
+
+  async getRelatedPhrases(musicId: string): Promise<RelatedPhrases[]> {
+    return this.relatedPhrasesRepository.findByMusicId(musicId);
+  }
+
+  async getNoOfDownloads(musicId: string): Promise<number> {
+    return this.userRepository.findNoOfDownloads(musicId);
+  }
+
+  async musicDetails(
+    musicId: string,
+    user: UserInterface
+  ): Promise<MusicDetails> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      if (user.role == UserRole.User) throw new UnAuthorizedError();
+      const det = await this.musicRepository.findDetailsById(musicId);
       if (!det) throw new MusicNotFoundError(musicId);
-      return det;
+      return Object.assign(new MusicDetails(), det);
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -94,9 +134,11 @@ export class MusicService {
     }
   }
 
-  async deleteMusic(music: Music, user: UserInterface): Promise<boolean> {
+  async deleteMusic(id: string, user: UserInterface): Promise<boolean> {
     if (!user) throw new UnAuthorizedError();
     if (user.role == UserRole.User) throw new UnAuthorizedError();
+    const music = await this.musicRepository.findById(id);
+    if (!music) throw new MusicNotFoundError(id);
     try {
       unlink(music.score, function (err) {
         if (err) throw err;

@@ -44,7 +44,7 @@ export class CategoryService {
 
   public async getCategory(id: string): Promise<Category> {
     try {
-      const cat = this.categoryRepository.findCategoryById(id);
+      const cat = this.categoryRepository.findById(id);
       if (!cat) throw new CategoryNotFoundError(id);
       return cat;
     } catch (error) {
@@ -53,6 +53,10 @@ export class CategoryService {
       console.log(error);
       throw new UnknownError();
     }
+  }
+
+  public async getChildren(parent: Category){
+    return this.categoryRepository.findChildren(parent);
   }
 
   public async createCategory(

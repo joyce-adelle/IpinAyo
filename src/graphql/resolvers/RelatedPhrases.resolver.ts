@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Arg, ID, Ctx } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, Ctx, Args } from "type-graphql";
 import { CreateRelatedPhrasesInput } from "../inputs/CreateRelatedPhrases.input";
 import { UpdateRelatedPhrasesInput } from "../inputs/UpdateRelatedPhrases.input";
 import { Inject } from "typedi";
@@ -12,6 +12,7 @@ import {
   RelatedPhrasePayload,
   RelatedPhrasesPayload,
 } from "../../services/serviceUtils/Payloads";
+import { IdArgs } from "../arguments/id.args";
 
 @Resolver()
 export class RelatedPhrasesResolver {
@@ -24,7 +25,7 @@ export class RelatedPhrasesResolver {
   }
 
   @Query(() => RelatedPhrasePayload)
-  async relatedPhrase(@Arg("id", () => ID) id: string) {
+  async relatedPhrase(@Args() { id }: IdArgs) {
     try {
       return await this.relatedPhrasesService.getRelatedPhrase(id);
     } catch (e) {
@@ -55,7 +56,7 @@ export class RelatedPhrasesResolver {
   @Mutation(() => RelatedPhrasePayload)
   async updateRelatedPhrases(
     @Ctx() { user }: Context,
-    @Arg("id", () => ID) id: string,
+    @Args() { id }: IdArgs,
     @Arg("data") data: UpdateRelatedPhrasesInput
   ) {
     try {
@@ -73,10 +74,7 @@ export class RelatedPhrasesResolver {
   }
 
   @Mutation(() => BooleanPayload)
-  async deleteRelatedPhrase(
-    @Ctx() { user }: Context,
-    @Arg("id", () => ID) id: string
-  ) {
+  async deleteRelatedPhrase(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {
       const booleanType = new BooleanType();
       const del = await this.relatedPhrasesService.deleteRelatedPhrase(

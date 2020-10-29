@@ -9,7 +9,7 @@ import {
   RelationId,
 } from "typeorm";
 import { Music } from "./Music";
-import { ObjectType, Field, ID } from 'type-graphql';
+import { ObjectType, Field, ID } from "type-graphql";
 
 @ObjectType()
 @Entity()
@@ -23,7 +23,7 @@ export class Category {
   @Column({ unique: true })
   name: string;
 
-  @Field(() => [Category], { nullable: true })
+  @Field(() => [Category])
   @TreeChildren()
   children: Category[];
 
@@ -34,10 +34,6 @@ export class Category {
   @RelationId((cat: Category) => cat.parent)
   parentId: string;
 
-  @ManyToMany((type) => Music, (music) => music.categories)
+  @ManyToMany(() => Music, (music) => music.categories)
   relatedMusic: Music[];
-
-  @Field(() => [ID])
-  @RelationId((relatedMusic: Category) => relatedMusic.relatedMusic)
-  relatedMusicIds: string[];
 }

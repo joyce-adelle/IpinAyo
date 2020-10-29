@@ -35,7 +35,7 @@ export class RelatedPhrasesService {
 
   public async getRelatedPhrase(id: string): Promise<RelatedPhrases> {
     try {
-      const phrase = await this.relatedPhrasesRepository.findRelatedPhraseDetailsById(
+      const phrase = await this.relatedPhrasesRepository.findOneById(
         id
       );
       if (!phrase) throw new PhraseNotFoundError(id);

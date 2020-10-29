@@ -14,7 +14,7 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     return this.save(relatedPhrasesDet);
   }
 
-  async findRelatedPhraseDetailsById(id: string): Promise<RelatedPhrases> {
+  async findOneById(id: string): Promise<RelatedPhrases> {
     return this.findOne({
       where: { id: id },
     });
@@ -28,7 +28,7 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     return this.findOne({ where: { groupId: groupId } });
   }
 
-  async findRelatedPhrasesByPhrase(phrase: string): Promise<RelatedPhrases[]> {
+  async findByPhrase(phrase: string): Promise<RelatedPhrases[]> {
     let obj = await this.findOneByPhrase(phrase);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
@@ -39,8 +39,8 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     });
   }
 
-  async findRelatedPhrasesById(id: string): Promise<RelatedPhrases[]> {
-    let obj = await this.findRelatedPhraseDetailsById(id);
+  async findById(id: string): Promise<RelatedPhrases[]> {
+    let obj = await this.findOneById(id);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
       throw new RelatedPhraseNotRetrieved(id);
@@ -50,38 +50,45 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     });
   }
 
-  async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
-    const result = await this.createQueryBuilder("relatedPhrases")
-    .leftJoinAndSelect("relatedPhrases.relatedMusic", "music")
-      .where((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select("relatedPhrases.groupId")
-          .from(RelatedPhrases, "relatedPhrases")
-          .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
-            query: query.trim(),
-          })
-          .getQuery();
-        return "groupId IN " + subQuery;
-      })
-      .andWhere("music.isVerified = true")
-      .orderBy("groupId")
+  async findByMusicId(musicId: string): Promise<RelatedPhrases[]> {
+    return this.createQueryBuilder("relatedPhrases")
+      .leftJoin("relatedPhrases.relatedMusic", "music")
+      .where("music.id = :musicId", { musicId: musicId })
       .getMany();
-
-      console.log(result);
-
-    let musicIds: string[] = [];
-    for (let key of result) {
-      musicIds.push(...key.relatedMusicIds);
-    }
-    return [...new Set(musicIds)];
   }
+
+  // async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
+  //   const result = await this.createQueryBuilder("relatedPhrases")
+  //   .leftJoinAndSelect("relatedPhrases.relatedMusic", "music")
+  //     .where((qb) => {
+  //       const subQuery = qb
+  //         .subQuery()
+  //         .select("relatedPhrases.groupId")
+  //         .from(RelatedPhrases, "relatedPhrases")
+  //         .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
+  //           query: query.trim(),
+  //         })
+  //         .getQuery();
+  //       return "groupId IN " + subQuery;
+  //     })
+  //     .andWhere("music.isVerified = true")
+  //     .orderBy("groupId")
+  //     .getMany();
+
+  //     console.log(result);
+
+  //   let musicIds: string[] = [];
+  //   for (let key of result) {
+  //     musicIds.push(...key.relatedMusicIds);
+  //   }
+  //   return [...new Set(musicIds)];
+  // }
 
   async updateRelatedPhrases(
     id: string,
     relatedPhrases: UpdateRelatedPhrases
   ): Promise<RelatedPhrases> {
-    let relatedPhrasesDet = await this.findRelatedPhraseDetailsById(id);
+    let relatedPhrasesDet = await this.findOneById(id);
     if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrasesDet))
       throw new RelatedPhraseNotRetrieved(id);
 
@@ -90,14 +97,14 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   }
 
   async deleteRelatedPhrase(id: string): Promise<boolean> {
-    let phrase = await this.findRelatedPhraseDetailsById(id);
+    let phrase = await this.findOneById(id);
     if (!RelatedPhrasesRepository.isRelatedPhrases(phrase))
       throw new RelatedPhraseNotRetrieved(id);
 
-    if (phrase.relatedMusicIds.length === 0) {
-      await this.delete(id);
-      return true;
-    }
+    // if (phrase.relatedMusicIds.length === 0) {
+    //   await this.delete(id);
+    //   return true;
+    // }
     return false;
   }
 

@@ -17,17 +17,23 @@ import { getConfirmationUrl } from "./serviceUtils/getConfirmationUrl";
 import { sendEmail } from "./serviceUtils/sendEmail";
 import { getPasswordConfirmationUrl } from "./serviceUtils/getPasswordConfirmationUrl";
 import { UserComposition } from "./serviceUtils/interfaces/UserComposition.interface";
+import { MusicRepository } from "../db/repositories/MusicRepository";
+import { Music } from "../db/entities/Music";
 
 @Service()
 export class UserService {
   @InjectRepository()
   private readonly userRepository: UserRepository;
 
-  private async getUser(id: string): Promise<User> {
+  @InjectRepository()
+  private readonly musicRepository: MusicRepository;
+
+  async getUserDetails(user: UserInterface): Promise<User> {
     try {
-      const user = await this.userRepository.findById(id);
-      if (!user) throw new UserNotFoundError(id);
-      return user;
+      if (!user) throw new UnAuthorizedError();
+      const userDet = await this.userRepository.findById(user.id);
+      if (!userDet) throw new UserNotFoundError(user.id);
+      return userDet;
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -36,13 +42,22 @@ export class UserService {
     }
   }
 
+  async getUserUploads(userId: string): Promise<Music[]> {
+    return this.musicRepository.findUploadsByUser(userId);
+  }
+
+  async getUserDownloads(userId: string): Promise<Music[]> {
+    return this.musicRepository.findDownloadsByUser(userId);
+  }
+
   public async updateUserComposition(
     user: UserInterface,
     data: UserComposition
   ): Promise<User> {
     try {
       if (!user) throw new UnAuthorizedError();
-      let userDet = await this.getUser(user.id);
+      let userDet = await this.userRepository.findById(user.id);
+      if (!userDet) throw new UserNotFoundError(user.id);
 
       if (
         data.isComposer &&

@@ -1,5 +1,4 @@
 import { InputType, Field } from "type-graphql";
-import { CreateUser } from "../../db/inputInterfaces/CreateUser";
 import { UserRole } from "../../utilities/UserRoles";
 import { CompositionType } from "../../utilities/CompositionType";
 import {
@@ -15,30 +14,25 @@ import {
   ArrayMaxSize,
   IsDefined,
 } from "class-validator";
-import { IsEqualTo } from '../validations/IsEqualTo.validation';
-
+import { IsEqualTo } from "../validations/IsEqualTo.validation";
+import { EmailInput } from "./Email.input";
 
 @InputType()
-export class CreateUserInput implements CreateUser {
+export class CreateUserInput extends EmailInput {
   @Field(() => String)
   @IsString()
   @Length(5, 30)
   username: string;
 
   @Field(() => String)
-  @IsEmail()
   @IsString()
-  email: string;
-
-  @Field(() => String)
-  @IsString()
-  @Length(8, 30)
+  @Length(8, 15)
   password: string;
 
   @Field(() => String)
   @IsString()
-  @Length(8, 30)
-  @IsEqualTo('password')
+  @Length(8, 15)
+  @IsEqualTo("password")
   confirmPassword: string;
 
   @Field(() => Boolean)

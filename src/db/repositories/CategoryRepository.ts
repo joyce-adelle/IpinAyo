@@ -10,7 +10,7 @@ export class CategoryRepository extends TreeRepository<Category> {
     let categoryDet = new Category();
     categoryDet.name = category.name;
     if (category.parentId) {
-      const parent = await this.findCategoryById(category.parentId);
+      const parent = await this.findById(category.parentId);
       if (!CategoryRepository.isCategory(parent))
         throw new CategoryNotRetrieved(category.parentId);
       categoryDet.parent = parent;
@@ -18,12 +18,23 @@ export class CategoryRepository extends TreeRepository<Category> {
     return this.save(categoryDet);
   }
 
-  async findCategoryById(id: string): Promise<Category> {
+  async findById(id: string): Promise<Category> {
     return this.findOne({ where: { id: id } });
   }
 
   async findOneByName(name: string): Promise<Category> {
     return this.findOne({ where: { name: name } });
+  }
+
+  async findByMusicId(musicId: string): Promise<Category[]> {
+    return this.createQueryBuilder("category")
+      .leftJoin("category.relatedMusic", "music")
+      .where("music.id = :musicId", { musicId: musicId })
+      .getMany();
+  }
+
+  async findChildren(parent: Category): Promise<Category[]> {
+    return this.findDescendants(parent);
   }
 
   async findDescendantIdsByIds(categoryIds: string[]): Promise<string[]> {
@@ -44,7 +55,7 @@ export class CategoryRepository extends TreeRepository<Category> {
     id: string,
     category: UpdateCategory
   ): Promise<Category> {
-    let categoryDet = await this.findCategoryById(id);
+    let categoryDet = await this.findById(id);
     if (!CategoryRepository.isCategory(categoryDet))
       throw new CategoryNotRetrieved(id);
     if (category.name) {
@@ -54,7 +65,7 @@ export class CategoryRepository extends TreeRepository<Category> {
       if (category.parentId === null) {
         categoryDet.parent = null;
       } else {
-        const parent = await this.findCategoryById(category.parentId);
+        const parent = await this.findById(category.parentId);
         if (!CategoryRepository.isCategory(parent))
           throw new CategoryNotRetrieved(category.parentId);
         categoryDet.parent = parent;

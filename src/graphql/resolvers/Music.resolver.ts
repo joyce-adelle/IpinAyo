@@ -16,6 +16,7 @@ import { Context } from "../../context/context.interface";
 import {
   BooleanPayload,
   BooleanType,
+  MusicArray,
   MusicDetailsPayload,
   MusicPayload,
   SingleMusicPayload,
@@ -47,13 +48,29 @@ export class MusicResolver {
   private readonly musicService: MusicService;
 
   @Query(() => MusicPayload)
-  allMusic() {
-    return this.musicService.allMusic();
+  async allMusic() {
+    try {
+      const arrayType = new MusicArray();
+      arrayType.music = await this.musicService.allMusic();
+      return arrayType;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @Query(() => MusicPayload)
-  allUnverifiedMusic(@Ctx() { user }: Context) {
-    return this.musicService.allUnverifiedMusic(user);
+  async allUnverifiedMusic(@Ctx() { user }: Context) {
+    try {
+      const arrayType = new MusicArray();
+      arrayType.music = await this.musicService.allUnverifiedMusic(user);
+      return arrayType;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @Query(() => SingleMusicPayload)

@@ -10,6 +10,7 @@ import {
   BooleanPayload,
   BooleanType,
   RelatedPhrasePayload,
+  RelatedPhrasesArray,
   RelatedPhrasesPayload,
 } from "../../services/serviceUtils/Payloads";
 import { IdArgs } from "../arguments/id.args";
@@ -20,8 +21,16 @@ export class RelatedPhrasesResolver {
   private readonly relatedPhrasesService: RelatedPhrasesService;
 
   @Query(() => RelatedPhrasesPayload)
-  relatedPhrases() {
-    return this.relatedPhrasesService.getAllRelatedPhrases();
+  async relatedPhrases() {
+    try {
+      const relArray = new RelatedPhrasesArray();
+      relArray.relatedPhrases = await this.relatedPhrasesService.getAllRelatedPhrases();
+      return relArray;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @Query(() => RelatedPhrasePayload)

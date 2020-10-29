@@ -33,8 +33,10 @@ export class CategoryRepository extends TreeRepository<Category> {
       .getMany();
   }
 
-  async findChildren(parent: Category): Promise<Category[]> {
-    return this.findDescendants(parent);
+  async findChildren(parentId: string): Promise<Category[]> {
+    return this.createQueryBuilder()
+      .where("parentId = :parentId", { parentId: parentId })
+      .getMany();
   }
 
   async findDescendantIdsByIds(categoryIds: string[]): Promise<string[]> {

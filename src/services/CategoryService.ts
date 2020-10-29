@@ -20,18 +20,7 @@ export class CategoryService {
   @InjectRepository()
   private readonly categoryRepository: CategoryRepository;
 
-  public async getTreeCategories(): Promise<Category[]> {
-    try {
-      return this.categoryRepository.findTrees();
-    } catch (error) {
-      if (error instanceof MyError) throw error;
-
-      console.log(error);
-      throw new UnknownError();
-    }
-  }
-
-  public async getCategories(): Promise<Category[]> {
+  public async getAllCategories(): Promise<Category[]> {
     try {
       return this.categoryRepository.find();
     } catch (error) {
@@ -42,9 +31,20 @@ export class CategoryService {
     }
   }
 
+  public async getRootCategories(): Promise<Category[]> {
+    try {
+      return this.categoryRepository.findRoots();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
+
   public async getCategory(id: string): Promise<Category> {
     try {
-      const cat = this.categoryRepository.findById(id);
+      const cat = await this.categoryRepository.findById(id);
       if (!cat) throw new CategoryNotFoundError(id);
       return cat;
     } catch (error) {
@@ -55,8 +55,8 @@ export class CategoryService {
     }
   }
 
-  public async getChildren(parent: Category){
-    return this.categoryRepository.findChildren(parent);
+  public async getChildren(parentId: string) {
+    return this.categoryRepository.findChildren(parentId);
   }
 
   public async createCategory(

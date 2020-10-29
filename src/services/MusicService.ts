@@ -38,14 +38,21 @@ export class MusicService {
   private readonly userRepository: UserRepository;
 
   async allMusic(): Promise<Music[]> {
-    return this.musicRepository.all();
+    try {
+      return await  this.musicRepository.all();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
   }
 
   async allUnverifiedMusic(user: UserInterface): Promise<Music[]> {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role == UserRole.User) throw new UnAuthorizedError();
-      return this.musicRepository.allUnverified();
+      return await this.musicRepository.allUnverified();
     } catch (error) {
       if (error instanceof MyError) throw error;
 

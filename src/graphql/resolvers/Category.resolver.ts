@@ -15,6 +15,7 @@ import { CategoryService } from "../../services/CategoryService";
 import { MyError } from "../../services/serviceUtils/MyError";
 import {
   CategoriesPayload,
+  CategoryArray,
   CategoryPayload,
 } from "../../services/serviceUtils/Payloads";
 import { UserError } from "../../utilities/genericTypes";
@@ -28,13 +29,29 @@ export class CategoryResolver {
   private readonly categoryService: CategoryService;
 
   @Query(() => CategoriesPayload)
-  treeCategories() {
-    return this.categoryService.getTreeCategories();
+  async allCategories() {
+    try {
+      const catArray = new CategoryArray();
+      catArray.categories = await this.categoryService.getAllCategories();
+      return catArray;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @Query(() => CategoriesPayload)
-  categories() {
-    return this.categoryService.getCategories();
+  async rootCategories() {
+    try {
+      const catArray = new CategoryArray();
+      catArray.categories = await this.categoryService.getRootCategories();
+      return catArray;
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @Query(() => CategoryPayload)
@@ -79,6 +96,6 @@ export class CategoryResolver {
 
   @FieldResolver()
   async children(@Root() parent: Category) {
-    return await this.categoryService.getChildren(parent);
+    return await this.categoryService.getChildren(parent.id);
   }
 }

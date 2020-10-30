@@ -22,6 +22,7 @@ import { getPasswordConfirmationUrl } from "./serviceUtils/getPasswordConfirmati
 import Auth from "../utilities/Auth";
 import { LoginUser } from "./serviceUtils/interfaces/LoginUser.interface";
 import { sign, JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import { GetRandomString } from "../utilities/GetRandomString";
 
 @Service()
 export class AutheticationService {
@@ -97,9 +98,7 @@ export class AutheticationService {
     try {
       const user = await this.userRepository.findOneByEmail(email);
       if (!user) throw new UserWithEmailNotFoundError(email);
-      const password = AutheticationService.makeRandomPassword(
-        ~~(Math.random() * 6) + 10
-      );
+      const password = GetRandomString(~~(Math.random() * 6) + 10);
       await sendEmail(
         user.email,
         getPasswordConfirmationUrl(user.id, await Auth.hashPassword(password)),
@@ -112,12 +111,5 @@ export class AutheticationService {
       console.log(error);
       throw new UnknownError();
     }
-  }
-
-  private static makeRandomPassword(len: number): string {
-    const al = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    return [...Array(len)]
-      .map(() => al[~~(Math.random() * al.length)])
-      .join("");
   }
 }

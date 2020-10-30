@@ -24,10 +24,7 @@ import { Context } from "vm";
 import { UserInterface } from "./context/user.interface";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { MusicRepository } from "./db/repositories/MusicRepository";
-import { UserRepository } from "./db/repositories/UserRepository";
-// import { ConfirmUserResolver } from "./graphql/resolvers/ConfirmUser.resolver";
-// import ConfirmationRoute from './confirmationRoute';
-import router from './confirmationRoute';
+import { UserRepository } from "./db/repositories/UserRepository";;
 
 var connection: Connection;
 
@@ -105,7 +102,6 @@ async function main() {
     Express.static(Path.join(__dirname, "../public/scores"))
   );
   app.use(Express.urlencoded({ extended: false }));
-  // app.use(router);
 
   app.listen(4000, () =>
     console.log("Server is running on http://localhost:4000/graphql")

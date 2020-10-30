@@ -10,6 +10,8 @@ import { InjectConnection } from "typeorm-typedi-extensions";
 import { MusicNotRetrieved, UserNotRetrieved } from "../dbUtils/DbErrors";
 import { MyDbError } from "../dbUtils/MyDbError";
 import { RelatedPhrases } from "../entities/RelatedPhrases";
+import { User } from "../entities/User";
+import { Category } from "../entities/Category";
 
 @EntityRepository(Music)
 export class MusicRepository extends Repository<Music> {
@@ -32,23 +34,24 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async createAndSave(music: CreateMusic): Promise<Music> {
+    let uploadedBy: User;
+    let categories: Category[];
+    let relatedPhrases: RelatedPhrases[];
+
+    const u = this.userRepository.findById(music.uploadedById);
+    const c = this.categoryRepository.findByIds(music.categoryIds);
+    const r = this.relatedPhrasesRepository.findByIds(music.relatedPhrasesIds);
+
     let musicDet = new Music();
     Object.assign(musicDet, music);
 
-    let uploadedBy = await this.userRepository.findById(music.uploadedById);
+    [uploadedBy, categories, relatedPhrases] = await Promise.all([u, c, r]);
+
     if (!uploadedBy) throw new UserNotRetrieved(music.uploadedById);
-
-    let categories = await this.categoryRepository.findByIds(music.categoryIds);
-    if (!categories)
-      throw new MyDbError("one or more of category ids' category not found");
-
-    let relatedPhrases = await this.relatedPhrasesRepository.findByIds(
-      music.relatedPhrasesIds
-    );
-    if (!relatedPhrases)
-      throw new MyDbError(
-        "one or more of related phrases ids' related phrase not found"
-      );
+    if (categories.length === 0)
+      throw new MyDbError("none of category ids' found");
+    if (relatedPhrases.length === 0)
+      throw new MyDbError("none of related phrases ids' found");
 
     musicDet.uploadedBy = uploadedBy;
     musicDet.updatedBy = uploadedBy;
@@ -91,14 +94,14 @@ export class MusicRepository extends Repository<Music> {
 
   async findById(id: string): Promise<Music> {
     return this.findOne({
-      where: { id: id },
+      where: { id: id, isVerified: true },
       relations: ["downloadedBy"],
     });
   }
 
   async findUploadsByUser(userId: string): Promise<Music[]> {
     return this.find({
-      where: { uploadedBy: userId },
+      where: { uploadedBy: userId, isVerified: true },
     });
   }
 
@@ -106,6 +109,7 @@ export class MusicRepository extends Repository<Music> {
     return this.createQueryBuilder("music")
       .leftJoin("music.downloadedBy", "user")
       .where("user.id = :userId", { userId: userId })
+      .having("isVerified = true")
       .getMany();
   }
 
@@ -257,6 +261,12 @@ export class MusicRepository extends Repository<Music> {
     }
     Object.assign(musicDet, music);
     return this.save(musicDet);
+  }
+
+  async changeScorePath(Oldscore: string, newScore: string) {
+    const music = await this.findOne({ where: { score: Oldscore } });
+    music.score = newScore;
+    return (await this.save(music)) ? true : false;
   }
 
   async userDownloadedMusic(userId: string, musicId: string): Promise<boolean> {

@@ -8,7 +8,8 @@ import {
   FieldResolver,
   Args,
 } from "type-graphql";
-import { createWriteStream, unlinkSync } from "fs";
+import { createWriteStream, existsSync, unlinkSync } from "fs";
+import { parse } from "path";
 import { UploadMusicInput } from "../inputs/UploadMusic.input";
 import { Inject } from "typedi";
 import { MusicService } from "../../services/MusicService";
@@ -26,6 +27,7 @@ import { UserError } from "../../utilities/genericTypes";
 import { UpdateMusicInput } from "../inputs/UpdateMusic.input";
 import { Music } from "../../db/entities/Music";
 import { IdArgs } from "../arguments/id.args";
+import { GetRandomString } from "../../utilities/GetRandomString";
 
 const Store = ({ stream, path }) => {
   return new Promise((resolve, reject) =>
@@ -74,9 +76,9 @@ export class MusicResolver {
   }
 
   @Query(() => SingleMusicPayload)
-  async getMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
+  async getMusic(@Args() { id }: IdArgs) {
     try {
-      return await this.musicService.getMusic(id, user);
+      return await this.musicService.getMusic(id);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -119,21 +121,42 @@ export class MusicResolver {
       if (mimetype !== "application/pdf") {
         return new UserError("invalid score file type, pdf files only");
       }
-      const path = __dirname + `/../../../public/scores/${filename}`;
+      if (existsSync(__dirname + `/../../../public/scores/${filename}`))
+        return new UserError("score already exists");
+
+      const path = MusicResolver.getScorePath(
+        __dirname +
+          `/../../../public/scores/${parse(filename).name}[@ipinayo.com].pdf`
+      );
+
       const stream = createReadStream();
-      // await Store({ stream, path });
+      await Store({ stream, path });
+
       music.scorePath = path;
-      music.scoreFilename = filename;
+      music.scoreFilename = parse(path).name;
+
       if (music.audioFile) {
         let { filename, mimetype, createReadStream } = await music.audioFile;
-        if (mimetype.match("audio.*") == null) {
+        if (mimetype.match("audio.*") == null)
           return new UserError("invalid audio file type, audio files only");
-        }
+
         let path = __dirname + `/../../../public/audios/${filename}`;
-        let stream = createReadStream();
-        await Store({ stream, path });
-        music.audioPath = path;
-        music.audioFilename = filename;
+        if (existsSync(path)) {
+          music.audioPath = path;
+          music.audioFilename = filename;
+        } else {
+          path = MusicResolver.getAudioPath(
+            __dirname +
+              `/../../../public/audios/${parse(filename).name}[@ipinayo.com]${
+                parse(filename).ext
+              }`,
+            parse(filename).ext
+          );
+          let stream = createReadStream();
+          await Store({ stream, path });
+          music.audioPath = path;
+          music.audioFilename = parse(path).name;
+        }
       }
 
       const booleanType = new BooleanType();
@@ -201,5 +224,22 @@ export class MusicResolver {
   @FieldResolver()
   numberOfDownloads(@Root() music: Music) {
     return this.musicService.getNoOfDownloads(music.id);
+  }
+
+  private static getScorePath(path: string): string {
+    if (!existsSync(path)) return path;
+    return MusicResolver.getScorePath(
+      __dirname +
+        `/../../../public/scores/${GetRandomString(20)}[@ipinayo.com].pdf`
+    );
+  }
+
+  private static getAudioPath(path: string, ext: string): string {
+    if (!existsSync(path)) return path;
+    return MusicResolver.getAudioPath(
+      __dirname +
+        `/../../../public/audios/${GetRandomString(20)}[@ipinayo.com]${ext}`,
+      ext
+    );
   }
 }

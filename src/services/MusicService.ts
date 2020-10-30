@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { MusicRepository } from "../db/repositories/MusicRepository";
-import { access, unlink } from "fs";
+import { access, accessSync, existsSync, unlink } from "fs";
 import { F_OK } from "constants";
 import { UploadMusic } from "./serviceUtils/interfaces/UploadMusic.interface";
 import { MyError } from "./serviceUtils/MyError";
@@ -22,6 +22,7 @@ import { RelatedPhrasesRepository } from "../db/repositories/RelatedPhrasesRepos
 import { Category } from "../db/entities/Category";
 import { RelatedPhrases } from "../db/entities/RelatedPhrases";
 import { UserRepository } from "../db/repositories/UserRepository";
+import { MyDbError } from "../db/dbUtils/MyDbError";
 
 @Service()
 export class MusicService {
@@ -39,7 +40,7 @@ export class MusicService {
 
   async allMusic(): Promise<Music[]> {
     try {
-      return await  this.musicRepository.all();
+      return await this.musicRepository.all();
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -61,14 +62,10 @@ export class MusicService {
     }
   }
 
-  async getMusic(id: string, user: UserInterface) {
+  async getMusic(id: string) {
     try {
       const music = await this.musicRepository.findById(id);
       if (!music) throw new MusicNotFoundError(id);
-      if (!music.isVerified) {
-        if (!user) throw new UnAuthorizedError();
-        if (user.role === UserRole.User) throw new UnAuthorizedError();
-      }
       return music;
     } catch (error) {
       if (error instanceof MyError) throw error;
@@ -112,29 +109,17 @@ export class MusicService {
     try {
       if (!user) throw new UnAuthorizedError();
       music.uploadedById = user.id;
-      access(music.scorePath, F_OK, (err) => {
-        if (err) {
-          console.log(err);
-          throw new MyError("Score not found");
-        } else {
-          music.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
-        }
-      });
-
+      accessSync(music.scorePath, F_OK);
+      music.score = `${process.env.SCORE_URL}/${music.scoreFilename}`;
       if (music.audioPath) {
-        access(music.audioPath, F_OK, (err) => {
-          if (err) {
-            music.audio = null;
-          } else {
-            music.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
-          }
-        });
+        if (!existsSync(music.audioPath)) music.audio = null;
+        else music.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
       }
-      console.log("herrrerererererere   ", music.score);
-      console.log("herrrerererererere   ", music.audio);
       return (await this.musicRepository.createAndSave(music)) ? true : false;
     } catch (error) {
       if (error instanceof MyError) throw error;
+      if (error instanceof UserNotRetrieved) throw new UnAuthorizedError();
+      if (error instanceof MyDbError) throw new MyError(error.message);
 
       console.log(error);
       throw new UnknownError();

@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Arg, Ctx, Args } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, Ctx, Args, Authorized } from "type-graphql";
 import { CreateRelatedPhrasesInput } from "../inputs/CreateRelatedPhrases.input";
 import { UpdateRelatedPhrasesInput } from "../inputs/UpdateRelatedPhrases.input";
 import { Inject } from "typedi";
@@ -14,6 +14,7 @@ import {
   RelatedPhrasesPayload,
 } from "../../services/serviceUtils/Payloads";
 import { IdArgs } from "../arguments/id.args";
+import { UserRole } from '../../utilities/UserRoles';
 
 @Resolver()
 export class RelatedPhrasesResolver {
@@ -44,6 +45,7 @@ export class RelatedPhrasesResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => RelatedPhrasePayload)
   async createRelatedPhrases(
     @Ctx() { user }: Context,
@@ -62,6 +64,7 @@ export class RelatedPhrasesResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => RelatedPhrasePayload)
   async updateRelatedPhrases(
     @Ctx() { user }: Context,
@@ -82,6 +85,7 @@ export class RelatedPhrasesResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => BooleanPayload)
   async deleteRelatedPhrase(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {

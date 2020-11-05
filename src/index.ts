@@ -24,8 +24,9 @@ import { Context } from "vm";
 import { UserInterface } from "./context/user.interface";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { MusicRepository } from "./db/repositories/MusicRepository";
-import { UserRepository } from "./db/repositories/UserRepository";;
-
+import { UserRepository } from "./db/repositories/UserRepository";
+import { ConfirmUserResolver } from "./graphql/resolvers/ConfirmUser.resolver";
+import { MyAuthChecker } from "./context/myAuthChecker";
 var connection: Connection;
 
 async function main() {
@@ -42,7 +43,7 @@ async function main() {
     if (authorizationSplit[0].toLocaleLowerCase() !== "bearer") {
       return;
     }
-    
+
     const token: string = authorizationSplit[1];
     let jwtPayload: string | any;
 
@@ -68,8 +69,9 @@ async function main() {
       RelatedPhrasesResolver,
       MusicResolver,
       AuthResolver,
-      // ConfirmUserResolver,
+      ConfirmUserResolver,
     ],
+    authChecker: MyAuthChecker,
     container: Container,
   });
   const server = new ApolloServer({

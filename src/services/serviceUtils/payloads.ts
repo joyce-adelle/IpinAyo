@@ -36,9 +36,16 @@ export class RelatedPhrasesArray {
   public relatedPhrases: RelatedPhrases[];
 }
 
+@ObjectType()
+export class UserArray {
+  @Field(() => [User])
+  public users: User[];
+}
+
 export const LoginPayload = userResponse("LoginPayload", LoginType);
 export const SignUpPayload = userResponse("SignUpPayload", User);
 export const UserPayload = userResponse("UserPayload", User);
+export const UsersPayload = userResponse("UsersPayload", UserArray);
 export const BooleanPayload = userResponse("BooleanPayload", BooleanType);
 export const RelatedPhrasePayload = userResponse(
   "RelatedPhrasePayload",

@@ -7,6 +7,7 @@ import {
   Args,
   FieldResolver,
   Root,
+  Authorized,
 } from "type-graphql";
 import { Inject } from "typedi";
 import { Context } from "../../context/context.interface";
@@ -19,6 +20,7 @@ import {
   CategoryPayload,
 } from "../../services/serviceUtils/Payloads";
 import { UserError } from "../../utilities/genericTypes";
+import { UserRole } from "../../utilities/UserRoles";
 import { IdArgs } from "../arguments/id.args";
 import { CreateCategoryInput } from "../inputs/CreateCategory.input";
 import { UpdateCategoryInput } from "../inputs/UpdateCategory.input";
@@ -65,6 +67,7 @@ export class CategoryResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => CategoryPayload)
   async createCategory(
     @Ctx() { user }: Context,
@@ -79,6 +82,7 @@ export class CategoryResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Superadmin)
   @Mutation(() => CategoryPayload)
   async updateCategory(
     @Ctx() { user }: Context,

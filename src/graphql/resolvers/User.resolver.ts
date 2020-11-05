@@ -6,6 +6,7 @@ import {
   FieldResolver,
   Root,
   Query,
+  Authorized,
 } from "type-graphql";
 import { UpdateUserCompositionInput } from "../inputs/UpdateUserComposition.input";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
@@ -17,16 +18,32 @@ import { UserError } from "../../utilities/genericTypes";
 import {
   BooleanPayload,
   BooleanType,
+  UserArray,
   UserPayload,
+  UsersPayload,
 } from "../../services/serviceUtils/Payloads";
 import { EmailInput } from "../inputs/Email.input";
 import { User } from "../../db/entities/User";
+import { UserRole } from "../../utilities/UserRoles";
 
 @Resolver(User)
 export class UserResolver {
   @Inject()
   private readonly userService: UserService;
 
+  @Authorized<UserRole>(UserRole.Superadmin)
+  @Query(() => UsersPayload)
+  async getAllUsers(@Ctx() { user }: Context) {
+    try {
+      const userArray = new UserArray();
+      userArray.users = await this.userService.getAllUsers(user);
+      return userArray;
+    } catch (e) {
+      if (e instanceof MyError) return new UserError(e.message);
+    }
+  }
+
+  @Authorized<UserRole>()
   @Query(() => UserPayload)
   async getUserDetails(@Ctx() { user }: Context) {
     try {
@@ -36,6 +53,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized<UserRole>()
   @Mutation(() => UserPayload)
   async updateUserComposition(
     @Ctx() { user }: Context,
@@ -50,6 +68,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized<UserRole>()
   @Mutation(() => BooleanPayload)
   async changeEmail(
     @Ctx() { user }: Context,
@@ -67,6 +86,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized<UserRole>()
   @Mutation(() => BooleanPayload)
   async changePassword(@Ctx() { user }: Context) {
     try {
@@ -81,6 +101,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Superadmin)
   @Mutation(() => BooleanPayload)
   async changeUserRole(
     @Ctx() { user }: Context,

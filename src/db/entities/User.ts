@@ -11,10 +11,12 @@ import {
 import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
 import { CompositionType } from "../../utilities/CompositionType";
-import { ObjectType, Field } from "type-graphql";
+import { ObjectType, Field, ID, Authorized } from "type-graphql";
 @Entity()
 @ObjectType()
 export class User {
+  @Field(() => ID)
+  @Authorized<UserRole>(UserRole.Superadmin)
   @PrimaryGeneratedColumn()
   readonly id: string;
 

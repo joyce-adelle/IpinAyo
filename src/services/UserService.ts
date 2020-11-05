@@ -28,6 +28,19 @@ export class UserService {
   @InjectRepository()
   private readonly musicRepository: MusicRepository;
 
+  async getAllUsers(user: UserInterface): Promise<User[]> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
+      return this.userRepository.find();
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
+
   async getUserDetails(user: UserInterface): Promise<User> {
     try {
       if (!user) throw new UnAuthorizedError();

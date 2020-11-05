@@ -7,6 +7,7 @@ import {
   Root,
   FieldResolver,
   Args,
+  Authorized,
 } from "type-graphql";
 import { createWriteStream, existsSync, unlinkSync } from "fs";
 import { parse } from "path";
@@ -30,6 +31,7 @@ import { IdArgs } from "../arguments/id.args";
 import { GetRandomString } from "../../utilities/GetRandomString";
 import { SearchService } from "../../services/SearchService";
 import { SearchMusicArgs } from "../arguments/search.args";
+import { UserRole } from "../../utilities/UserRoles";
 
 const Store = ({ stream, path }) => {
   return new Promise((resolve, reject) =>
@@ -67,6 +69,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Query(() => MusicPayload)
   async allUnverifiedMusic(@Ctx() { user }: Context) {
     try {
@@ -91,6 +94,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Query(() => MusicDetailsPayload)
   async musicDetails(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
@@ -121,6 +125,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => BooleanPayload)
   public async deleteMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
@@ -135,6 +140,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>()
   @Mutation(() => BooleanPayload)
   async uploadMusic(
     @Ctx() { user }: Context,
@@ -194,6 +200,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
   @Mutation(() => SingleMusicPayload)
   async updateMusic(
     @Ctx() { user }: Context,
@@ -203,14 +210,26 @@ export class MusicResolver {
     try {
       if (music.audioFile) {
         let { filename, mimetype, createReadStream } = await music.audioFile;
-        if (mimetype.match("audio.*") == null) {
+        if (mimetype.match("audio.*") == null)
           return new UserError("invalid audio file type, audio files only");
-        }
+
         let path = __dirname + `/../../../public/audios/${filename}`;
-        let stream = createReadStream();
-        await Store({ stream, path });
-        music.audioPath = path;
-        music.audioFilename = filename;
+        if (existsSync(path)) {
+          music.audioPath = path;
+          music.audioFilename = filename;
+        } else {
+          path = MusicResolver.getAudioPath(
+            __dirname +
+              `/../../../public/audios/${parse(filename).name}[@ipinayo.com]${
+                parse(filename).ext
+              }`,
+            parse(filename).ext
+          );
+          let stream = createReadStream();
+          await Store({ stream, path });
+          music.audioPath = path;
+          music.audioFilename = parse(path).name;
+        }
       }
 
       return await this.musicService.updateMusic(id, user, music);
@@ -221,6 +240,7 @@ export class MusicResolver {
     }
   }
 
+  @Authorized<UserRole>()
   @Mutation(() => BooleanPayload)
   async downloadMusic(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {

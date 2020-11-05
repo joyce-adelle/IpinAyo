@@ -130,6 +130,8 @@ export class MusicService {
     if (!user) throw new UnAuthorizedError();
     if (user.role == UserRole.User) throw new UnAuthorizedError();
     const music = await this.musicRepository.findById(id);
+    if (music.isVerified && user.role != UserRole.Superadmin)
+      throw new UnAuthorizedError();
     if (!music) throw new MusicNotFoundError(id);
     try {
       unlink(music.score, function (err) {

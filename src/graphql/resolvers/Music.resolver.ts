@@ -28,6 +28,8 @@ import { UpdateMusicInput } from "../inputs/UpdateMusic.input";
 import { Music } from "../../db/entities/Music";
 import { IdArgs } from "../arguments/id.args";
 import { GetRandomString } from "../../utilities/GetRandomString";
+import { SearchService } from "../../services/SearchService";
+import { SearchMusicArgs } from "../arguments/search.args";
 
 const Store = ({ stream, path }) => {
   return new Promise((resolve, reject) =>
@@ -48,6 +50,9 @@ const Store = ({ stream, path }) => {
 export class MusicResolver {
   @Inject()
   private readonly musicService: MusicService;
+
+  @Inject()
+  private readonly searchService: SearchService;
 
   @Query(() => MusicPayload)
   async allMusic() {
@@ -90,6 +95,25 @@ export class MusicResolver {
   async musicDetails(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
       return await this.musicService.musicDetails(id, user);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
+  }
+
+  @Query(() => MusicPayload)
+  async searchMusic(
+    @Args() { query, categoryIds, exactCategory }: SearchMusicArgs
+  ) {
+    try {
+      const arrayType = new MusicArray();
+      arrayType.music = await this.searchService.filterByQuery(
+        query,
+        categoryIds,
+        exactCategory
+      );
+      return arrayType;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

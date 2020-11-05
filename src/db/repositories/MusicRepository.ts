@@ -147,6 +147,8 @@ export class MusicRepository extends Repository<Music> {
   }
 
   async findByQuery(query: string): Promise<Music[]> {
+    if (!query) return this.all();
+
     return this.createQueryBuilder("music")
       .distinct(true)
       .leftJoin("music.relatedPhrases", "relatedPhrases")

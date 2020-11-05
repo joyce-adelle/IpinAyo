@@ -45,6 +45,7 @@ export class SearchService {
             const desc = await this.categoryRepository.findDescendantIdsByIds(
               selectedCategoryIds
             );
+            console.log("heeere", desc)
             if (query)
               return this.musicRepository.findByQueryAndCategoryIds(
                 query,

@@ -28,7 +28,9 @@ export class RelatedPhrasesResolver {
   @Inject()
   private readonly relatedPhrasesService: RelatedPhrasesService;
 
-  @Query(() => RelatedPhrasesPayload)
+  @Query(() => RelatedPhrasesPayload, {
+    complexity: ({ childComplexity, args }) => args.limit * childComplexity,
+  })
   async relatedPhrases(@Args() { limit, offset }: ArrayArgs) {
     try {
       return await this.relatedPhrasesService.getAllRelatedPhrases(
@@ -42,7 +44,7 @@ export class RelatedPhrasesResolver {
     }
   }
 
-  @Query(() => RelatedPhrasePayload)
+  @Query(() => RelatedPhrasePayload, { complexity: 2 })
   async relatedPhrase(@Args() { id }: IdArgs) {
     try {
       return await this.relatedPhrasesService.getRelatedPhrase(id);
@@ -54,7 +56,7 @@ export class RelatedPhrasesResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => RelatedPhrasePayload)
+  @Mutation(() => RelatedPhrasePayload, { complexity: 3 })
   async createRelatedPhrases(
     @Ctx() { user }: Context,
     @Arg("data") data: CreateRelatedPhrasesInput
@@ -73,7 +75,7 @@ export class RelatedPhrasesResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => RelatedPhrasePayload)
+  @Mutation(() => RelatedPhrasePayload, { complexity: 3 })
   async updateRelatedPhrases(
     @Ctx() { user }: Context,
     @Args() { id }: IdArgs,
@@ -94,7 +96,7 @@ export class RelatedPhrasesResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 3 })
   async deleteRelatedPhrase(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {
       return await this.relatedPhrasesService.deleteRelatedPhrase(user, id);

@@ -17,7 +17,7 @@ export class AuthResolver {
   @Inject()
   private readonly authService: AutheticationService;
 
-  @Query(() => LoginPayload)
+  @Query(() => LoginPayload, { complexity: 2 })
   public async login(@Arg("credentials") credentials: LoginUserInput) {
     try {
       return await this.authService.login(credentials);
@@ -28,7 +28,7 @@ export class AuthResolver {
     }
   }
 
-  @Mutation(() => SignUpPayload)
+  @Mutation(() => SignUpPayload, { complexity: 3 })
   public async signUp(@Arg("input") input: CreateUserInput) {
     try {
       return await this.authService.signUp(input);
@@ -39,7 +39,7 @@ export class AuthResolver {
     }
   }
 
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 5 })
   public async forgotPassword(@Arg("email") { email }: EmailInput) {
     try {
       return await this.authService.forgotPassword(email);

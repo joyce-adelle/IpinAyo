@@ -33,7 +33,9 @@ export class UserResolver {
   private readonly userService: UserService;
 
   @Authorized<UserRole>(UserRole.Superadmin)
-  @Query(() => UsersPayload)
+  @Query(() => UsersPayload, {
+    complexity: ({ childComplexity, args }) => args.limit * childComplexity,
+  })
   async getAllUsers(
     @Ctx() { user }: Context,
     @Args() { limit, offset }: ArrayArgs
@@ -46,7 +48,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>()
-  @Query(() => UserPayload)
+  @Query(() => UserPayload, { complexity: 2 })
   async getUserDetails(@Ctx() { user }: Context) {
     try {
       return await this.userService.getUserDetails(user);
@@ -56,7 +58,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>()
-  @Mutation(() => UserPayload)
+  @Mutation(() => UserPayload, { complexity: 3 })
   async updateUserComposition(
     @Ctx() { user }: Context,
     @Arg("data") data: UpdateUserCompositionInput
@@ -71,7 +73,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>()
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 5 })
   async changeEmail(
     @Ctx() { user }: Context,
     @Arg("newEmail") emailInput: EmailInput
@@ -86,7 +88,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>()
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 5 })
   async changePassword(@Ctx() { user }: Context) {
     try {
       return await this.userService.changePassword(user);
@@ -98,7 +100,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>(UserRole.Superadmin)
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 3 })
   async changeUserRole(
     @Ctx() { user }: Context,
     @Arg("details") details: ChangeUserRoleInput
@@ -115,7 +117,7 @@ export class UserResolver {
   }
 
   @Authorized<UserRole>()
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 2 })
   async downloadMusic(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {
       return await this.userService.downloadMusic(user, id);
@@ -126,12 +128,16 @@ export class UserResolver {
     }
   }
 
-  @FieldResolver()
+  @FieldResolver({
+    complexity: ({ args }) => args.limit * 2,
+  })
   uploads(@Root() user: User, @Args() { limit, offset }: ArrayArgs) {
     return this.userService.getUserUploads(user.id, limit, offset);
   }
 
-  @FieldResolver()
+  @FieldResolver({
+    complexity: ({ args }) => args.limit * 2,
+  })
   downloads(@Root() user: User, @Args() { limit, offset }: ArrayArgs) {
     return this.userService.getUserDownloads(user.id, limit, offset);
   }

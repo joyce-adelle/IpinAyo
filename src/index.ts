@@ -27,7 +27,12 @@ import { MusicRepository } from "./db/repositories/MusicRepository";
 import { UserRepository } from "./db/repositories/UserRepository";
 import { ConfirmUserResolver } from "./graphql/resolvers/ConfirmUser.resolver";
 import { MyAuthChecker } from "./context/myAuthChecker";
-import { UserRole } from './utilities/UserRoles';
+import { UserRole } from "./utilities/UserRoles";
+import {
+  getComplexity,
+  fieldExtensionsEstimator,
+  simpleEstimator,
+} from "graphql-query-complexity";
 var connection: Connection;
 
 async function main() {
@@ -75,6 +80,7 @@ async function main() {
     authChecker: MyAuthChecker,
     container: Container,
   });
+
   const server = new ApolloServer({
     schema,
     context,
@@ -87,6 +93,31 @@ async function main() {
       return error;
       // return new GraphQLError("Internal error");
     },
+    plugins: [
+      {
+        requestDidStart: () => ({
+          didResolveOperation({ request, document }) {
+            const complexity = getComplexity({
+              schema,
+              operationName: request.operationName,
+              query: document,
+              variables: request.variables,
+              estimators: [
+                fieldExtensionsEstimator(),
+                simpleEstimator({ defaultComplexity: 1 }),
+              ],
+            });
+            if (complexity > 4000) {
+              throw new GraphQLError(
+                `Sorry, too complicated query! ${complexity} is over the max allowed complexity.`
+              );
+            }
+            // And here we can e.g. subtract the complexity point from hourly API calls limit.
+            console.log("Used query complexity points:", complexity);
+          },
+        }),
+      },
+    ],
     engine: {
       reportSchema: true,
       // debugPrintReports: true,

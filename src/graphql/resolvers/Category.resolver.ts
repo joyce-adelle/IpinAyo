@@ -29,7 +29,7 @@ export class CategoryResolver {
   @Inject()
   private readonly categoryService: CategoryService;
 
-  @Query(() => CategoriesPayload)
+  @Query(() => CategoriesPayload, { complexity: 10 })
   async allCategories() {
     try {
       return await this.categoryService.getAllCategories();
@@ -40,7 +40,7 @@ export class CategoryResolver {
     }
   }
 
-  @Query(() => CategoriesPayload)
+  @Query(() => CategoriesPayload, { complexity: 5 })
   async rootCategories() {
     try {
       return await this.categoryService.getRootCategories();
@@ -51,7 +51,7 @@ export class CategoryResolver {
     }
   }
 
-  @Query(() => CategoryPayload)
+  @Query(() => CategoryPayload, { complexity: 2 })
   async category(@Args() { id }: IdArgs) {
     try {
       return await this.categoryService.getCategory(id);
@@ -63,7 +63,7 @@ export class CategoryResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => CategoryPayload)
+  @Mutation(() => CategoryPayload, { complexity: 3 })
   async createCategory(
     @Ctx() { user }: Context,
     @Arg("data") data: CreateCategoryInput
@@ -78,7 +78,7 @@ export class CategoryResolver {
   }
 
   @Authorized<UserRole>(UserRole.Superadmin)
-  @Mutation(() => CategoryPayload)
+  @Mutation(() => CategoryPayload, { complexity: 15 })
   async updateCategory(
     @Ctx() { user }: Context,
     @Args() { id }: IdArgs,
@@ -93,7 +93,7 @@ export class CategoryResolver {
     }
   }
 
-  @FieldResolver()
+  @FieldResolver({ complexity: 3 })
   async children(@Root() parent: Category) {
     return await this.categoryService.getChildren(parent.id);
   }

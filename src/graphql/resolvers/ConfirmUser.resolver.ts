@@ -11,7 +11,7 @@ export class ConfirmUserResolver {
   @Inject()
   private readonly confirmationService: ConfirmationService;
 
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 5 })
   async confirmUser(@Arg("token") token: string) {
     try {
       return await this.confirmationService.confirmUser(token);
@@ -22,7 +22,7 @@ export class ConfirmUserResolver {
     }
   }
 
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 5 })
   async confirmChangedPassword(
     @Arg("token") token: string,
     @Arg("input") input: ChangePasswordInput

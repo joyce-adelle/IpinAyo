@@ -56,7 +56,9 @@ export class MusicResolver {
   @Inject()
   private readonly searchService: SearchService;
 
-  @Query(() => MusicPayload)
+  @Query(() => MusicPayload, {
+    complexity: ({ childComplexity, args }) => args.limit * childComplexity,
+  })
   async allMusic(@Args() { limit, page }: MusicArgs) {
     try {
       return await this.musicService.allMusic(limit, page);
@@ -68,7 +70,7 @@ export class MusicResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Query(() => MusicPayload)
+  @Query(() => MusicPayload, { complexity: 10 })
   async allUnverifiedMusic(@Ctx() { user }: Context) {
     try {
       return await this.musicService.allUnverifiedMusic(user);
@@ -79,7 +81,7 @@ export class MusicResolver {
     }
   }
 
-  @Query(() => SingleMusicPayload)
+  @Query(() => SingleMusicPayload, { complexity: 2 })
   async getMusic(@Args() { id }: IdArgs) {
     try {
       return await this.musicService.getMusic(id);
@@ -91,7 +93,7 @@ export class MusicResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Query(() => MusicDetailsPayload)
+  @Query(() => MusicDetailsPayload, { complexity: 15 })
   async musicDetails(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
       return await this.musicService.musicDetails(id, user);
@@ -102,7 +104,9 @@ export class MusicResolver {
     }
   }
 
-  @Query(() => MusicPayload)
+  @Query(() => MusicPayload, {
+    complexity: ({ childComplexity, args }) => args.limit * childComplexity,
+  })
   async searchMusic(
     @Args() { query, categoryIds, exactCategory, limit, page }: SearchMusicArgs
   ) {
@@ -122,7 +126,7 @@ export class MusicResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 3 })
   public async deleteMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
       return await this.musicService.deleteMusic(id, user);
@@ -134,7 +138,7 @@ export class MusicResolver {
   }
 
   @Authorized<UserRole>()
-  @Mutation(() => BooleanPayload)
+  @Mutation(() => BooleanPayload, { complexity: 10 })
   async uploadMusic(
     @Ctx() { user }: Context,
     @Arg("music") music: UploadMusicInput
@@ -191,7 +195,7 @@ export class MusicResolver {
   }
 
   @Authorized<UserRole>(UserRole.Admin, UserRole.Superadmin)
-  @Mutation(() => SingleMusicPayload)
+  @Mutation(() => SingleMusicPayload, { complexity: 5 })
   async updateMusic(
     @Ctx() { user }: Context,
     @Args() { id }: IdArgs,
@@ -230,17 +234,17 @@ export class MusicResolver {
     }
   }
 
-  @FieldResolver()
+  @FieldResolver({ complexity: 2 })
   categories(@Root() music: Music) {
     return this.musicService.getCategories(music.id);
   }
 
-  @FieldResolver()
+  @FieldResolver({ complexity: 2 })
   relatedPhrases(@Root() music: Music, @Args() { limit, offset }: ArrayArgs) {
     return this.musicService.getRelatedPhrases(music.id, limit, offset);
   }
 
-  @FieldResolver()
+  @FieldResolver({ complexity: 2 })
   numberOfDownloads(@Root() music: Music) {
     return this.musicService.getNoOfDownloads(music.id);
   }

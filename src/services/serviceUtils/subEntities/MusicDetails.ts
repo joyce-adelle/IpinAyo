@@ -1,8 +1,8 @@
-import { User } from "../entities/User";
-import { ScoreType } from "../../utilities/ScoreType";
-import { Category } from "../entities/Category";
-import { RelatedPhrases } from "../entities/RelatedPhrases";
 import { Field, ID, ObjectType } from "type-graphql";
+import { Category } from "../../../db/entities/Category";
+import { RelatedPhrases } from "../../../db/entities/RelatedPhrases";
+import { User } from "../../../db/entities/User";
+import { ScoreType } from "../../../utilities/ScoreType";
 
 @ObjectType()
 export class MusicDetails {

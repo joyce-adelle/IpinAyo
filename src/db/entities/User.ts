@@ -12,6 +12,7 @@ import { Music } from "./Music";
 import { UserRole } from "../../utilities/UserRoles";
 import { CompositionType } from "../../utilities/CompositionType";
 import { ObjectType, Field, ID, Authorized } from "type-graphql";
+import { MusicArray } from '../../services/serviceUtils/subEntities/MusicArray';
 @Entity()
 @ObjectType()
 export class User {
@@ -63,11 +64,11 @@ export class User {
   })
   typeOfCompositions: CompositionType[];
 
-  @Field(() => [Music])
+  @Field(() => MusicArray)
   @OneToMany(() => Music, (music) => music.uploadedBy)
   uploads: Music[];
 
-  @Field(() => [Music])
+  @Field(() => MusicArray)
   @ManyToMany(() => Music, (music) => music.downloadedBy)
   @JoinTable()
   downloads: Music[];

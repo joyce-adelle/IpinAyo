@@ -27,4 +27,6 @@ export class RelatedPhrases {
 
   @ManyToMany(() => Music, (relatedMusic) => relatedMusic.relatedPhrases)
   relatedMusic: Music[];
+
+  relatedMusicCount: number;
 }

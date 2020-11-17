@@ -16,15 +16,27 @@ import {
   UnknownError,
 } from "./serviceUtils/Errors";
 import { MyError } from "./serviceUtils/MyError";
+import { BooleanType } from "./serviceUtils/subEntities/BooleanType";
+import { RelatedPhrasesArray } from "./serviceUtils/subEntities/RelatedPhrasesArray";
 
 @Service()
 export class RelatedPhrasesService {
   @InjectRepository()
   private readonly relatedPhrasesRepository: RelatedPhrasesRepository;
 
-  public async getAllRelatedPhrases(): Promise<RelatedPhrases[]> {
+  public async getAllRelatedPhrases(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<RelatedPhrasesArray> {
     try {
-      return this.relatedPhrasesRepository.find();
+      const [
+        relatedPhrases,
+        totalCount,
+      ] = await this.relatedPhrasesRepository.all(limit, offset);
+      return Object.assign(new RelatedPhrasesArray(), {
+        relatedPhrases,
+        totalCount,
+      });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -35,9 +47,7 @@ export class RelatedPhrasesService {
 
   public async getRelatedPhrase(id: string): Promise<RelatedPhrases> {
     try {
-      const phrase = await this.relatedPhrasesRepository.findOneById(
-        id
-      );
+      const phrase = await this.relatedPhrasesRepository.findOneById(id);
       if (!phrase) throw new PhraseNotFoundError(id);
       return phrase;
     } catch (error) {
@@ -104,13 +114,13 @@ export class RelatedPhrasesService {
   public async deleteRelatedPhrase(
     user: UserInterface,
     id: string
-  ): Promise<boolean> {
+  ): Promise<BooleanType> {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role === UserRole.User) throw new UnAuthorizedError();
-      const del = await this.relatedPhrasesRepository.deleteRelatedPhrase(id);
-      if (!del) throw new CannotBeDeletedError();
-      return del;
+      const done = await this.relatedPhrasesRepository.deleteRelatedPhrase(id);
+      if (!done) throw new CannotBeDeletedError();
+      return Object.assign(new BooleanType(), { done });
     } catch (error) {
       if (error instanceof RelatedPhraseNotRetrieved)
         throw new PhraseNotFoundError(id);

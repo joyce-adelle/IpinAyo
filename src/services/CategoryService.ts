@@ -14,15 +14,17 @@ import {
   UnknownError,
 } from "./serviceUtils/errors";
 import { MyError } from "./serviceUtils/MyError";
+import { CategoryArray } from "./serviceUtils/subEntities/CategoryArray";
 
 @Service()
 export class CategoryService {
   @InjectRepository()
   private readonly categoryRepository: CategoryRepository;
 
-  public async getAllCategories(): Promise<Category[]> {
+  public async getAllCategories(): Promise<CategoryArray> {
     try {
-      return this.categoryRepository.find();
+      const categories = await this.categoryRepository.find();
+      return Object.assign(new CategoryArray(), { categories });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -31,9 +33,10 @@ export class CategoryService {
     }
   }
 
-  public async getRootCategories(): Promise<Category[]> {
+  public async getRootCategories(): Promise<CategoryArray> {
     try {
-      return this.categoryRepository.findRoots();
+      const categories = await this.categoryRepository.findRoots();
+      return Object.assign(new CategoryArray(), { categories });
     } catch (error) {
       if (error instanceof MyError) throw error;
 

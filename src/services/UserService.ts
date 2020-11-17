@@ -18,7 +18,9 @@ import { sendEmail } from "./serviceUtils/sendEmail";
 import { getPasswordConfirmationUrl } from "./serviceUtils/getPasswordConfirmationUrl";
 import { UserComposition } from "./serviceUtils/interfaces/UserComposition.interface";
 import { MusicRepository } from "../db/repositories/MusicRepository";
-import { Music } from "../db/entities/Music";
+import { BooleanType } from "./serviceUtils/subEntities/BooleanType";
+import { MusicArray } from "./serviceUtils/subEntities/MusicArray";
+import { UserArray } from "./serviceUtils/subEntities/UserArray";
 
 @Service()
 export class UserService {
@@ -28,11 +30,16 @@ export class UserService {
   @InjectRepository()
   private readonly musicRepository: MusicRepository;
 
-  async getAllUsers(user: UserInterface): Promise<User[]> {
+  async getAllUsers(
+    user: UserInterface,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<UserArray> {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
-      return this.userRepository.find();
+      const [users, totalCount] = await this.userRepository.all(limit, offset);
+      return Object.assign(new UserArray(), { users, totalCount });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -55,12 +62,30 @@ export class UserService {
     }
   }
 
-  async getUserUploads(userId: string): Promise<Music[]> {
-    return this.musicRepository.findUploadsByUser(userId);
+  async getUserUploads(
+    userId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<MusicArray> {
+    const [music, totalCount] = await this.musicRepository.findUploadsByUser(
+      userId,
+      limit,
+      offset
+    );
+    return Object.assign(new MusicArray(), { music, totalCount });
   }
 
-  async getUserDownloads(userId: string): Promise<Music[]> {
-    return this.musicRepository.findDownloadsByUser(userId);
+  async getUserDownloads(
+    userId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<MusicArray> {
+    const [music, totalCount] = await this.musicRepository.findDownloadsByUser(
+      userId,
+      limit,
+      offset
+    );
+    return Object.assign(new MusicArray(), { music, totalCount });
   }
 
   public async updateUserComposition(
@@ -101,11 +126,15 @@ export class UserService {
     user: UserInterface,
     userToChangeId: string,
     newRole: UserRole
-  ): Promise<boolean> {
+  ): Promise<BooleanType> {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role !== UserRole.Superadmin) throw new UnAuthorizedError();
-      return await this.userRepository.changeRole(userToChangeId, newRole);
+      const done = await this.userRepository.changeRole(
+        userToChangeId,
+        newRole
+      );
+      return Object.assign(new BooleanType(), { done });
     } catch (error) {
       if (error instanceof UserNotRetrieved)
         throw new UserNotFoundError(userToChangeId);
@@ -116,12 +145,15 @@ export class UserService {
     }
   }
 
-  async changeEmail(user: UserInterface, newEmail: string): Promise<boolean> {
+  async changeEmail(
+    user: UserInterface,
+    newEmail: string
+  ): Promise<BooleanType> {
     try {
       if (!user) throw new UnAuthorizedError();
       console.log(user);
       await sendEmail(newEmail, getConfirmationUrl(user.id, newEmail));
-      return true;
+      return Object.assign(new BooleanType(), { done: true });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -130,7 +162,7 @@ export class UserService {
     }
   }
 
-  async changePassword(user: UserInterface): Promise<boolean> {
+  async changePassword(user: UserInterface): Promise<BooleanType> {
     try {
       if (!user) throw new UnAuthorizedError();
       const password = await this.userRepository.findPasswordById(user.id);
@@ -138,7 +170,23 @@ export class UserService {
         user.email,
         getPasswordConfirmationUrl(user.id, password)
       );
-      return true;
+      return Object.assign(new BooleanType(), { done: true });
+    } catch (error) {
+      if (error instanceof MyError) throw error;
+
+      console.log(error);
+      throw new UnknownError();
+    }
+  }
+
+  public async downloadMusic(
+    user: UserInterface,
+    musicId: string
+  ): Promise<BooleanType> {
+    try {
+      if (!user) throw new UnAuthorizedError();
+      await this.userRepository.userDownloadedMusic(user.id, musicId);
+      return Object.assign(new BooleanType(), { done: true });
     } catch (error) {
       if (error instanceof MyError) throw error;
 

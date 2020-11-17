@@ -17,8 +17,6 @@ import { MusicService } from "../../services/MusicService";
 import { Context } from "../../context/context.interface";
 import {
   BooleanPayload,
-  BooleanType,
-  MusicArray,
   MusicDetailsPayload,
   MusicPayload,
   SingleMusicPayload,
@@ -32,6 +30,8 @@ import { GetRandomString } from "../../utilities/GetRandomString";
 import { SearchService } from "../../services/SearchService";
 import { SearchMusicArgs } from "../arguments/search.args";
 import { UserRole } from "../../utilities/UserRoles";
+import { MusicArgs } from "../arguments/music.args";
+import { ArrayArgs } from "../arguments/array.args";
 
 const Store = ({ stream, path }) => {
   return new Promise((resolve, reject) =>
@@ -57,11 +57,9 @@ export class MusicResolver {
   private readonly searchService: SearchService;
 
   @Query(() => MusicPayload)
-  async allMusic() {
+  async allMusic(@Args() { limit, page }: MusicArgs) {
     try {
-      const arrayType = new MusicArray();
-      arrayType.music = await this.musicService.allMusic();
-      return arrayType;
+      return await this.musicService.allMusic(limit, page);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -73,9 +71,7 @@ export class MusicResolver {
   @Query(() => MusicPayload)
   async allUnverifiedMusic(@Ctx() { user }: Context) {
     try {
-      const arrayType = new MusicArray();
-      arrayType.music = await this.musicService.allUnverifiedMusic(user);
-      return arrayType;
+      return await this.musicService.allUnverifiedMusic(user);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -108,16 +104,16 @@ export class MusicResolver {
 
   @Query(() => MusicPayload)
   async searchMusic(
-    @Args() { query, categoryIds, exactCategory }: SearchMusicArgs
+    @Args() { query, categoryIds, exactCategory, limit, page }: SearchMusicArgs
   ) {
     try {
-      const arrayType = new MusicArray();
-      arrayType.music = await this.searchService.filterByQuery(
+      return await this.searchService.filterByQuery(
         query,
         categoryIds,
-        exactCategory
+        exactCategory,
+        limit,
+        page
       );
-      return arrayType;
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -129,10 +125,7 @@ export class MusicResolver {
   @Mutation(() => BooleanPayload)
   public async deleteMusic(@Args() { id }: IdArgs, @Ctx() { user }: Context) {
     try {
-      const booleanType = new BooleanType();
-      const done = await this.musicService.deleteMusic(id, user);
-      booleanType.done = done;
-      return booleanType;
+      return await this.musicService.deleteMusic(id, user);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -189,10 +182,7 @@ export class MusicResolver {
         }
       }
 
-      const booleanType = new BooleanType();
-      const done = await this.musicService.uploadMusic(user, music);
-      booleanType.done = done;
-      return booleanType;
+      return await this.musicService.uploadMusic(user, music);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -240,29 +230,14 @@ export class MusicResolver {
     }
   }
 
-  @Authorized<UserRole>()
-  @Mutation(() => BooleanPayload)
-  async downloadMusic(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
-    try {
-      const booleanType = new BooleanType();
-      const done = await this.musicService.downloadMusic(user, id);
-      booleanType.done = done;
-      return booleanType;
-    } catch (e) {
-      if (e instanceof MyError) {
-        return new UserError(e.message);
-      }
-    }
-  }
-
   @FieldResolver()
   categories(@Root() music: Music) {
     return this.musicService.getCategories(music.id);
   }
 
   @FieldResolver()
-  relatedPhrases(@Root() music: Music) {
-    return this.musicService.getRelatedPhrases(music.id);
+  relatedPhrases(@Root() music: Music, @Args() { limit, offset }: ArrayArgs) {
+    return this.musicService.getRelatedPhrases(music.id, limit, offset);
   }
 
   @FieldResolver()

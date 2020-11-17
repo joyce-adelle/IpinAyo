@@ -14,6 +14,7 @@ import { ScoreType } from "../../utilities/ScoreType";
 import { Category } from "./Category";
 import { RelatedPhrases } from "./RelatedPhrases";
 import { Field, ID, Int, ObjectType } from "type-graphql";
+import { RelatedPhrasesArray } from '../../services/serviceUtils/subEntities/RelatedPhrasesArray';
 
 @ObjectType()
 @Entity()
@@ -86,7 +87,7 @@ export class Music {
   @JoinTable()
   categories: Category[];
 
-  @Field(() => [RelatedPhrases])
+  @Field(() => RelatedPhrasesArray)
   @ManyToMany(
     () => RelatedPhrases,
     (relatedPhrases) => relatedPhrases.relatedMusic

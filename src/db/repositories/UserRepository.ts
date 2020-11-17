@@ -14,6 +14,10 @@ export class UserRepository extends Repository<User> {
     return this.save(userDet);
   }
 
+  async all( take: number = 20, skip: number = 0): Promise<[User[], number]> {
+    return this.findAndCount({ skip: skip, take: take });
+  }
+
   async findById(id: string): Promise<User> {
     return this.findOne({
       where: { id: id },
@@ -74,6 +78,13 @@ export class UserRepository extends Repository<User> {
     user.role = newRole;
     let saved = await this.save(user);
     return saved ? true : false;
+  }
+
+  async userDownloadedMusic(userId: string, musicId: string): Promise<void> {
+    return this.createQueryBuilder()
+      .relation("downloads")
+      .of(userId)
+      .add(musicId);
   }
 
   static isUser(user: any): user is User {

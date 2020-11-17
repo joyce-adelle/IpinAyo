@@ -67,15 +67,18 @@ export class MusicRepository extends Repository<Music> {
     return this.save(musicDet);
   }
 
-  async all(): Promise<Music[]> {
-    return this.find({
+  async all(take: number = 20, skip: number = 0): Promise<[Music[], number]> {
+    return this.findAndCount({
       where: { isVerified: true },
+      skip: skip,
+      take: take,
     });
   }
 
-  async allUnverified(): Promise<Music[]> {
-    return this.find({
+  async allUnverified(): Promise<[Music[], number]> {
+    return this.findAndCount({
       where: { isVerified: false },
+      take: 20,
     });
   }
 
@@ -95,29 +98,42 @@ export class MusicRepository extends Repository<Music> {
   async findById(id: string): Promise<Music> {
     return this.findOne({
       where: { id: id, isVerified: true },
-      relations: ["downloadedBy"],
     });
   }
 
-  async findUploadsByUser(userId: string): Promise<Music[]> {
-    return this.find({
+  async findUploadsByUser(
+    userId: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    return this.findAndCount({
       where: { uploadedBy: userId, isVerified: true },
+      skip: skip,
+      take: take,
     });
   }
 
-  async findDownloadsByUser(userId: string): Promise<Music[]> {
+  async findDownloadsByUser(
+    userId: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
     return this.createQueryBuilder("music")
       .leftJoin("music.downloadedBy", "user")
       .where("user.id = :userId", { userId: userId })
-      .having("isVerified = true")
-      .getMany();
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByQueryAndCategoryIds(
     query: string,
-    selectedCategoryIds: string[]
-  ): Promise<Music[]> {
-    if (selectedCategoryIds.length === 0) return this.findByQuery(query);
+    selectedCategoryIds: string[],
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    if (selectedCategoryIds.length === 0)
+      return this.findByQuery(query, skip, take);
     return this.createQueryBuilder("music")
       .distinct(true)
       .leftJoin("music.categories", "category")
@@ -136,18 +152,25 @@ export class MusicRepository extends Repository<Music> {
           .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
             query: query.trim(),
           })
+          .orderBy("relatedPhrases.groupId")
           .getQuery();
         return "relatedPhrases.groupId IN " + subQuery;
       })
       .andWhere("category.id IN (:...selectedCategoryIds)", {
         selectedCategoryIds,
       })
-      .having("isVerified = true")
-      .getMany();
+      .andWhere("music.isVerified = true")
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
-  async findByQuery(query: string): Promise<Music[]> {
-    if (!query) return this.all();
+  async findByQuery(
+    query: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    if (!query) return this.all(skip, take);
 
     return this.createQueryBuilder("music")
       .distinct(true)
@@ -166,15 +189,22 @@ export class MusicRepository extends Repository<Music> {
           .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
             query: query.trim(),
           })
+          .orderBy("relatedPhrases.groupId")
           .getQuery();
         return "relatedPhrases.groupId IN " + subQuery;
       })
-      .having("isVerified = true")
-      .getMany();
+      .andWhere("music.isVerified = true")
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
-  async findByCategoryIds(categoryIds: string[]): Promise<Music[]> {
-    if (categoryIds.length === 0) return this.all();
+  async findByCategoryIds(
+    categoryIds: string[],
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    if (categoryIds.length === 0) return this.all(skip, take);
 
     return this.createQueryBuilder("music")
       .distinct(true)
@@ -182,15 +212,19 @@ export class MusicRepository extends Repository<Music> {
       .where("category.id IN (:...categoryIds)", {
         categoryIds,
       })
-      .having("isVerified = true")
-      .getMany();
+      .andWhere("music.isVerified = true")
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByQueryAndExactCategoryIds(
     query: string,
-    categoryIds: string[]
-  ): Promise<Music[]> {
-    if (categoryIds.length === 0) return this.findByQuery(query);
+    categoryIds: string[],
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    if (categoryIds.length === 0) return this.findByQuery(query, skip, take);
 
     return this.createQueryBuilder("music")
       .distinct(true)
@@ -210,22 +244,29 @@ export class MusicRepository extends Repository<Music> {
           .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
             query: query.trim(),
           })
+          .orderBy("relatedPhrases.groupId")
           .getQuery();
         return "relatedPhrases.groupId IN " + subQuery;
       })
       .andWhere("category.id IN (:...categoryIds)", {
         categoryIds,
       })
+      .andWhere("music.isVerified = true")
       .groupBy("music.id")
       .having("count(distinct categoryId) >= :length", {
         length: categoryIds.length,
       })
-      .andHaving("isVerified = true")
-      .getMany();
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
-  async findByExactCategoryIds(categoryIds: string[]): Promise<Music[]> {
-    if (categoryIds.length === 0) return this.all();
+  async findByExactCategoryIds(
+    categoryIds: string[],
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[Music[], number]> {
+    if (categoryIds.length === 0) return this.all(skip, take);
 
     return this.createQueryBuilder("music")
       .distinct(true)
@@ -233,12 +274,14 @@ export class MusicRepository extends Repository<Music> {
       .where("category.id IN (:...categoryIds)", {
         categoryIds,
       })
+      .andWhere("isVerified = true")
       .groupBy("music.id")
       .having("count(distinct categoryId) >= :length", {
         length: categoryIds.length,
       })
-      .andHaving("isVerified = true")
-      .getMany();
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
 
   async updateMusic(
@@ -252,7 +295,7 @@ export class MusicRepository extends Repository<Music> {
     }
     const user = await this.userRepository.findById(updatedById);
     if (!user) throw new UserNotRetrieved(updatedById);
-    musicDet.updatedBy = user;
+
     if (music.isVerified && !musicDet.isVerified) {
       musicDet.verifiedBy = user;
       musicDet.verifiedAt = new Date();
@@ -261,29 +304,45 @@ export class MusicRepository extends Repository<Music> {
       musicDet.verifiedAt = null;
       musicDet.verifiedBy = null;
     }
+
+    if (music.addCategoryIds && music.removeCategoryIds)
+      await this.createQueryBuilder()
+        .relation("categories")
+        .of(id)
+        .addAndRemove(music.addCategoryIds, music.removeCategoryIds);
+    if (music.addCategoryIds && !music.removeCategoryIds)
+      await this.createQueryBuilder()
+        .relation("categories")
+        .of(id)
+        .add(music.addCategoryIds);
+    if (!music.addCategoryIds && music.removeCategoryIds)
+      await this.createQueryBuilder()
+        .relation("categories")
+        .of(id)
+        .remove(music.removeCategoryIds);
+
+    if (music.addRelatedPhrasesIds && music.removeRelatedPhrasesIds)
+      await this.createQueryBuilder()
+        .relation("relatedPhrases")
+        .of(id)
+        .addAndRemove(
+          music.addRelatedPhrasesIds,
+          music.removeRelatedPhrasesIds
+        );
+    if (music.addRelatedPhrasesIds && !music.removeRelatedPhrasesIds)
+      await this.createQueryBuilder()
+        .relation("relatedPhrases")
+        .of(id)
+        .add(music.addRelatedPhrasesIds);
+    if (!music.addRelatedPhrasesIds && music.removeRelatedPhrasesIds)
+      await this.createQueryBuilder()
+        .relation("relatedPhrases")
+        .of(id)
+        .remove(music.removeRelatedPhrasesIds);
+
     Object.assign(musicDet, music);
+    musicDet.updatedBy = user;
     return this.save(musicDet);
-  }
-
-  async changeScorePath(Oldscore: string, newScore: string) {
-    const music = await this.findOne({ where: { score: Oldscore } });
-    music.score = newScore;
-    return (await this.save(music)) ? true : false;
-  }
-
-  async userDownloadedMusic(userId: string, musicId: string): Promise<boolean> {
-    let userDet = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ["downloads"],
-    });
-    if (!userDet) throw new UserNotRetrieved(userId);
-
-    let music = await this.findById(musicId);
-    if (!music) throw new MusicNotRetrieved(musicId);
-
-    userDet.downloads.push(music);
-
-    return (await this.userRepository.save(userDet)) ? true : false;
   }
 
   static isMusic(music: any): music is Music {

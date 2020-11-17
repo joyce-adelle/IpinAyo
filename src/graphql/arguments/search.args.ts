@@ -1,9 +1,10 @@
 import { IsOptional, IsString} from "class-validator";
 import { ArgsType, Field, ID } from "type-graphql";
 import { IsId } from "../validations/Id.validation";
+import { MusicArgs } from './music.args';
 
 @ArgsType()
-export class SearchMusicArgs {
+export class SearchMusicArgs extends MusicArgs {
     @Field(() => String, { nullable: true })
     @IsOptional()
     @IsString()

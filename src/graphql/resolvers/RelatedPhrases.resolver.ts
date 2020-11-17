@@ -1,4 +1,12 @@
-import { Resolver, Query, Mutation, Arg, Ctx, Args, Authorized } from "type-graphql";
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Arg,
+  Ctx,
+  Args,
+  Authorized,
+} from "type-graphql";
 import { CreateRelatedPhrasesInput } from "../inputs/CreateRelatedPhrases.input";
 import { UpdateRelatedPhrasesInput } from "../inputs/UpdateRelatedPhrases.input";
 import { Inject } from "typedi";
@@ -8,13 +16,12 @@ import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
 import {
   BooleanPayload,
-  BooleanType,
   RelatedPhrasePayload,
-  RelatedPhrasesArray,
   RelatedPhrasesPayload,
 } from "../../services/serviceUtils/Payloads";
 import { IdArgs } from "../arguments/id.args";
-import { UserRole } from '../../utilities/UserRoles';
+import { UserRole } from "../../utilities/UserRoles";
+import { ArrayArgs } from "../arguments/array.args";
 
 @Resolver()
 export class RelatedPhrasesResolver {
@@ -22,11 +29,12 @@ export class RelatedPhrasesResolver {
   private readonly relatedPhrasesService: RelatedPhrasesService;
 
   @Query(() => RelatedPhrasesPayload)
-  async relatedPhrases() {
+  async relatedPhrases(@Args() { limit, offset }: ArrayArgs) {
     try {
-      const relArray = new RelatedPhrasesArray();
-      relArray.relatedPhrases = await this.relatedPhrasesService.getAllRelatedPhrases();
-      return relArray;
+      return await this.relatedPhrasesService.getAllRelatedPhrases(
+        limit,
+        offset
+      );
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -89,13 +97,7 @@ export class RelatedPhrasesResolver {
   @Mutation(() => BooleanPayload)
   async deleteRelatedPhrase(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
     try {
-      const booleanType = new BooleanType();
-      const del = await this.relatedPhrasesService.deleteRelatedPhrase(
-        user,
-        id
-      );
-      booleanType.done = del;
-      return booleanType;
+      return await this.relatedPhrasesService.deleteRelatedPhrase(user, id);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

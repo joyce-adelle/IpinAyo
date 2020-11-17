@@ -7,6 +7,7 @@ import {
   Root,
   Query,
   Authorized,
+  Args,
 } from "type-graphql";
 import { UpdateUserCompositionInput } from "../inputs/UpdateUserComposition.input";
 import { ChangeUserRoleInput } from "../inputs/ChangeUserRole.input";
@@ -17,14 +18,14 @@ import { MyError } from "../../services/serviceUtils/MyError";
 import { UserError } from "../../utilities/genericTypes";
 import {
   BooleanPayload,
-  BooleanType,
-  UserArray,
   UserPayload,
   UsersPayload,
 } from "../../services/serviceUtils/Payloads";
 import { EmailInput } from "../inputs/Email.input";
 import { User } from "../../db/entities/User";
 import { UserRole } from "../../utilities/UserRoles";
+import { IdArgs } from "../arguments/id.args";
+import { ArrayArgs } from "../arguments/array.args";
 
 @Resolver(User)
 export class UserResolver {
@@ -33,11 +34,12 @@ export class UserResolver {
 
   @Authorized<UserRole>(UserRole.Superadmin)
   @Query(() => UsersPayload)
-  async getAllUsers(@Ctx() { user }: Context) {
+  async getAllUsers(
+    @Ctx() { user }: Context,
+    @Args() { limit, offset }: ArrayArgs
+  ) {
     try {
-      const userArray = new UserArray();
-      userArray.users = await this.userService.getAllUsers(user);
-      return userArray;
+      return await this.userService.getAllUsers(user, limit, offset);
     } catch (e) {
       if (e instanceof MyError) return new UserError(e.message);
     }
@@ -75,10 +77,7 @@ export class UserResolver {
     @Arg("newEmail") emailInput: EmailInput
   ) {
     try {
-      const booleanType = new BooleanType();
-      const done = await this.userService.changeEmail(user, emailInput.email);
-      booleanType.done = done;
-      return booleanType;
+      return await this.userService.changeEmail(user, emailInput.email);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -90,10 +89,7 @@ export class UserResolver {
   @Mutation(() => BooleanPayload)
   async changePassword(@Ctx() { user }: Context) {
     try {
-      const booleanType = new BooleanType();
-      const done = await this.userService.changePassword(user);
-      booleanType.done = done;
-      return booleanType;
+      return await this.userService.changePassword(user);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -108,27 +104,35 @@ export class UserResolver {
     @Arg("details") details: ChangeUserRoleInput
   ) {
     try {
-      const booleanType = new BooleanType();
-      const done = await this.userService.changeUserRole(
+      return await this.userService.changeUserRole(
         user,
         details.userToChangeId,
         details.role
       );
-
-      booleanType.done = done;
-      return booleanType;
     } catch (e) {
       if (e instanceof MyError) return new UserError(e.message);
     }
   }
 
-  @FieldResolver()
-  uploads(@Root() user: User) {
-    return this.userService.getUserUploads(user.id);
+  @Authorized<UserRole>()
+  @Mutation(() => BooleanPayload)
+  async downloadMusic(@Ctx() { user }: Context, @Args() { id }: IdArgs) {
+    try {
+      return await this.userService.downloadMusic(user, id);
+    } catch (e) {
+      if (e instanceof MyError) {
+        return new UserError(e.message);
+      }
+    }
   }
 
   @FieldResolver()
-  downloads(@Root() user: User) {
-    return this.userService.getUserDownloads(user.id);
+  uploads(@Root() user: User, @Args() { limit, offset }: ArrayArgs) {
+    return this.userService.getUserUploads(user.id, limit, offset);
+  }
+
+  @FieldResolver()
+  downloads(@Root() user: User, @Args() { limit, offset }: ArrayArgs) {
+    return this.userService.getUserDownloads(user.id, limit, offset);
   }
 }

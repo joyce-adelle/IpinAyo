@@ -27,6 +27,7 @@ import { MusicRepository } from "./db/repositories/MusicRepository";
 import { UserRepository } from "./db/repositories/UserRepository";
 import { ConfirmUserResolver } from "./graphql/resolvers/ConfirmUser.resolver";
 import { MyAuthChecker } from "./context/myAuthChecker";
+import { UserRole } from './utilities/UserRoles';
 var connection: Connection;
 
 async function main() {
@@ -109,12 +110,12 @@ async function main() {
     console.log("Server is running on http://localhost:4000/graphql")
   );
 
-  //   let rep = getCustomRepository(UserRepository);
+  //   let rep = getCustomRepository(MusicRepository);
   //   try {
-  //   let c = await rep.findDownloads("14");
+  //   let c = await rep.updateMusic("1","19", {removeCategoryIds: ["19", "29", "30"], addCategoryIds: []});
   //   console.log(c)
   // } catch (error) {
-  //     console.log(error.message)
+  //     console.log(error.mesage)
   // }
 }
 

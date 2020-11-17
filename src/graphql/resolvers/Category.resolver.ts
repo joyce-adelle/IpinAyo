@@ -16,7 +16,6 @@ import { CategoryService } from "../../services/CategoryService";
 import { MyError } from "../../services/serviceUtils/MyError";
 import {
   CategoriesPayload,
-  CategoryArray,
   CategoryPayload,
 } from "../../services/serviceUtils/Payloads";
 import { UserError } from "../../utilities/genericTypes";
@@ -33,9 +32,7 @@ export class CategoryResolver {
   @Query(() => CategoriesPayload)
   async allCategories() {
     try {
-      const catArray = new CategoryArray();
-      catArray.categories = await this.categoryService.getAllCategories();
-      return catArray;
+      return await this.categoryService.getAllCategories();
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -46,9 +43,7 @@ export class CategoryResolver {
   @Query(() => CategoriesPayload)
   async rootCategories() {
     try {
-      const catArray = new CategoryArray();
-      catArray.categories = await this.categoryService.getRootCategories();
-      return catArray;
+      return await this.categoryService.getRootCategories();
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

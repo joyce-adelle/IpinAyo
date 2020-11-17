@@ -12,12 +12,8 @@ import { UserRepository } from "../db/repositories/UserRepository";
 import { MyError } from "./serviceUtils/MyError";
 import Auth from "../utilities/Auth";
 import { ChangePassword } from "./serviceUtils/interfaces/ChangePassword.interface";
-import {
-  verify,
-  JsonWebTokenError,
-  NotBeforeError,
-  TokenExpiredError,
-} from "jsonwebtoken";
+import { verify, JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import { BooleanType } from "./serviceUtils/subEntities/BooleanType";
 
 @Service()
 export class ConfirmationService {
@@ -27,7 +23,7 @@ export class ConfirmationService {
   public async confirmChangedPassword(
     token: string,
     input: ChangePassword
-  ): Promise<boolean> {
+  ): Promise<BooleanType> {
     try {
       if (input.newPassword !== input.confirmNewPassword)
         throw new PasswordsDoNotMatchError();
@@ -35,12 +31,12 @@ export class ConfirmationService {
       let jwtPayload: string | any;
 
       if (!token) {
-        return false;
+        return Object.assign(new BooleanType(), { done: false });
       }
 
       jwtPayload = verify(token, process.env.JWT_SECRET);
       if (!jwtPayload) {
-        return false;
+        return Object.assign(new BooleanType(), { done: false });
       }
 
       if (!Auth.compare(input.oldPassword, jwtPayload.user.password))
@@ -50,7 +46,7 @@ export class ConfirmationService {
         password: input.newPassword,
       });
 
-      return true;
+      return Object.assign(new BooleanType(), { done: true });
     } catch (error) {
       if (error instanceof MyError) throw error;
       if (error instanceof TokenExpiredError) throw new ExpiredError();
@@ -61,17 +57,17 @@ export class ConfirmationService {
     }
   }
 
-  public async confirmUser(token: string): Promise<boolean> {
+  public async confirmUser(token: string): Promise<BooleanType> {
     try {
       let jwtPayload: string | any;
 
       if (!token) {
-        return false;
+        return Object.assign(new BooleanType(), { done: false });
       }
 
       jwtPayload = verify(token, process.env.JWT_SECRET);
       if (!jwtPayload) {
-        return false;
+        return Object.assign(new BooleanType(), { done: false });
       }
 
       const userDet = await this.userRepository.findById(jwtPayload.user.id);
@@ -82,7 +78,7 @@ export class ConfirmationService {
         email: jwtPayload.user.email,
       });
 
-      return true;
+      return Object.assign(new BooleanType(), { done: true });
     } catch (error) {
       if (error instanceof MyError) throw error;
       if (error instanceof TokenExpiredError) throw new ExpiredError();

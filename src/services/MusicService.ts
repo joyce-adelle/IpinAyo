@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import { MusicRepository } from "../db/repositories/MusicRepository";
-import { access, accessSync, existsSync, unlink } from "fs";
+import { accessSync, existsSync, unlink } from "fs";
 import { F_OK } from "constants";
 import { UploadMusic } from "./serviceUtils/interfaces/UploadMusic.interface";
 import { MyError } from "./serviceUtils/MyError";
@@ -12,17 +12,18 @@ import {
   MusicNotFoundError,
   UnAuthorizedError,
   UnknownError,
-  UserNotFoundError,
 } from "./serviceUtils/errors";
 import { UpdateMusic } from "../db/inputInterfaces/UpdateMusic";
-import { MusicDetails } from "../db/subEntities/MusicDetails";
-import { UserNotRetrieved, MusicNotRetrieved } from "../db/dbUtils/DbErrors";
+import { UserNotRetrieved } from "../db/dbUtils/DbErrors";
 import { CategoryRepository } from "../db/repositories/CategoryRepository";
 import { RelatedPhrasesRepository } from "../db/repositories/RelatedPhrasesRepository";
 import { Category } from "../db/entities/Category";
-import { RelatedPhrases } from "../db/entities/RelatedPhrases";
 import { UserRepository } from "../db/repositories/UserRepository";
 import { MyDbError } from "../db/dbUtils/MyDbError";
+import { MusicDetails } from "./serviceUtils/subEntities/MusicDetails";
+import { BooleanType } from "./serviceUtils/subEntities/BooleanType";
+import { MusicArray } from "./serviceUtils/subEntities/MusicArray";
+import { RelatedPhrasesArray } from "./serviceUtils/subEntities/RelatedPhrasesArray";
 
 @Service()
 export class MusicService {
@@ -38,9 +39,13 @@ export class MusicService {
   @InjectRepository()
   private readonly userRepository: UserRepository;
 
-  async allMusic(): Promise<Music[]> {
+  async allMusic(limit: number = 20, page: number = 1): Promise<MusicArray> {
     try {
-      return await this.musicRepository.all();
+      const [music, totalCount] = await this.musicRepository.all(
+        limit,
+        (page - 1) * limit
+      );
+      return Object.assign(new MusicArray(), { music, totalCount });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -49,11 +54,12 @@ export class MusicService {
     }
   }
 
-  async allUnverifiedMusic(user: UserInterface): Promise<Music[]> {
+  async allUnverifiedMusic(user: UserInterface): Promise<MusicArray> {
     try {
       if (!user) throw new UnAuthorizedError();
       if (user.role == UserRole.User) throw new UnAuthorizedError();
-      return await this.musicRepository.allUnverified();
+      const [music, totalCount] = await this.musicRepository.allUnverified();
+      return Object.assign(new MusicArray(), { music, totalCount });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -79,8 +85,20 @@ export class MusicService {
     return this.categoryRepository.findByMusicId(musicId);
   }
 
-  async getRelatedPhrases(musicId: string): Promise<RelatedPhrases[]> {
-    return this.relatedPhrasesRepository.findByMusicId(musicId);
+  async getRelatedPhrases(
+    musicId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<RelatedPhrasesArray> {
+    const [
+      relatedPhrases,
+      totalCount,
+    ] = await this.relatedPhrasesRepository.findByMusicId(
+      musicId,
+      limit,
+      offset
+    );
+    return { relatedPhrases, totalCount };
   }
 
   async getNoOfDownloads(musicId: string): Promise<number> {
@@ -105,7 +123,10 @@ export class MusicService {
     }
   }
 
-  async uploadMusic(user: UserInterface, music: UploadMusic): Promise<boolean> {
+  async uploadMusic(
+    user: UserInterface,
+    music: UploadMusic
+  ): Promise<BooleanType> {
     try {
       if (!user) throw new UnAuthorizedError();
       music.uploadedById = user.id;
@@ -115,7 +136,8 @@ export class MusicService {
         if (!existsSync(music.audioPath)) music.audio = null;
         else music.audio = `${process.env.AUDIO_URL}/${music.audioFilename}`;
       }
-      return (await this.musicRepository.createAndSave(music)) ? true : false;
+      const mus = await this.musicRepository.createAndSave(music);
+      return Object.assign(new BooleanType(), { done: mus ? true : false });
     } catch (error) {
       if (error instanceof MyError) throw error;
       if (error instanceof UserNotRetrieved) throw new UnAuthorizedError();
@@ -126,7 +148,7 @@ export class MusicService {
     }
   }
 
-  async deleteMusic(id: string, user: UserInterface): Promise<boolean> {
+  async deleteMusic(id: string, user: UserInterface): Promise<BooleanType> {
     if (!user) throw new UnAuthorizedError();
     if (user.role == UserRole.User) throw new UnAuthorizedError();
     const music = await this.musicRepository.findById(id);
@@ -144,8 +166,8 @@ export class MusicService {
           console.log("File deleted!");
         });
       }
-
-      return (await this.musicRepository.remove(music)) ? true : false;
+      const mus = await this.musicRepository.remove(music);
+      return Object.assign(new BooleanType(), { done: mus ? true : false });
     } catch (error) {
       if (error instanceof MyError) throw error;
 
@@ -164,25 +186,6 @@ export class MusicService {
       if (user.role == UserRole.User) throw new UnAuthorizedError();
       return this.musicRepository.updateMusic(musicId, user.id, music);
     } catch (error) {
-      if (error instanceof MyError) throw error;
-
-      console.log(error);
-      throw new UnknownError();
-    }
-  }
-
-  public async downloadMusic(
-    user: UserInterface,
-    musicId: string
-  ): Promise<boolean> {
-    try {
-      if (!user) throw new UnAuthorizedError();
-      return this.musicRepository.userDownloadedMusic(user.id, musicId);
-    } catch (error) {
-      if (error instanceof UserNotRetrieved)
-        throw new UserNotFoundError(user.id);
-      if (error instanceof MusicNotRetrieved)
-        throw new MusicNotFoundError(user.id);
       if (error instanceof MyError) throw error;
 
       console.log(error);

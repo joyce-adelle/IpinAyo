@@ -23,6 +23,8 @@ import Auth from "../utilities/Auth";
 import { LoginUser } from "./serviceUtils/interfaces/LoginUser.interface";
 import { sign, JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { GetRandomString } from "../utilities/GetRandomString";
+import { BooleanType } from "./serviceUtils/subEntities/BooleanType";
+import { LoginType } from "./serviceUtils/subEntities/LoginType";
 
 @Service()
 export class AutheticationService {
@@ -61,7 +63,7 @@ export class AutheticationService {
     }
   }
 
-  public async login(credentials: LoginUser): Promise<string> {
+  public async login(credentials: LoginUser): Promise<LoginType> {
     try {
       const user = await this.userRepository.findByEmailAddPassword(
         credentials.email
@@ -83,7 +85,7 @@ export class AutheticationService {
         { expiresIn: "24h" }
       );
 
-      return token;
+      return Object.assign(new LoginType(), { token });
     } catch (error) {
       if (error instanceof MyError) throw error;
       if (error instanceof TokenExpiredError) throw new ExpiredError();
@@ -94,7 +96,7 @@ export class AutheticationService {
     }
   }
 
-  async forgotPassword(email: string): Promise<boolean> {
+  async forgotPassword(email: string): Promise<BooleanType> {
     try {
       const user = await this.userRepository.findOneByEmail(email);
       if (!user) throw new UserWithEmailNotFoundError(email);
@@ -104,7 +106,7 @@ export class AutheticationService {
         getPasswordConfirmationUrl(user.id, await Auth.hashPassword(password)),
         password
       );
-      return true;
+      return Object.assign(new BooleanType(), { done: true });
     } catch (error) {
       if (error instanceof MyError) throw error;
 

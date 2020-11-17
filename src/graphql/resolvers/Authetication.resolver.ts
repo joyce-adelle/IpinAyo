@@ -2,9 +2,7 @@ import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Inject } from "typedi";
 import {
   BooleanPayload,
-  BooleanType,
   LoginPayload,
-  LoginType,
   SignUpPayload,
 } from "../../services/serviceUtils/Payloads";
 import { MyError } from "../../services/serviceUtils/MyError";
@@ -22,11 +20,7 @@ export class AuthResolver {
   @Query(() => LoginPayload)
   public async login(@Arg("credentials") credentials: LoginUserInput) {
     try {
-      const loginType = new LoginType();
-      const token = await this.authService.login(credentials);
-
-      loginType.token = token;
-      return loginType;
+      return await this.authService.login(credentials);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);
@@ -46,12 +40,9 @@ export class AuthResolver {
   }
 
   @Mutation(() => BooleanPayload)
-  public async forgotPassword(@Arg("email") emailInput: EmailInput) {
+  public async forgotPassword(@Arg("email") { email }: EmailInput) {
     try {
-      const booleanType = new BooleanType();
-      const done = await this.authService.forgotPassword(emailInput.email);
-      booleanType.done = done;
-      return booleanType;
+      return await this.authService.forgotPassword(email);
     } catch (e) {
       if (e instanceof MyError) {
         return new UserError(e.message);

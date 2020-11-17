@@ -14,6 +14,13 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     return this.save(relatedPhrasesDet);
   }
 
+  async all(
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[RelatedPhrases[], number]> {
+    return this.findAndCount({ skip: skip, take: take });
+  }
+
   async findOneById(id: string): Promise<RelatedPhrases> {
     return this.findOne({
       where: { id: id },
@@ -28,61 +35,52 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
     return this.findOne({ where: { groupId: groupId } });
   }
 
-  async findByPhrase(phrase: string): Promise<RelatedPhrases[]> {
+  async findByPhrase(
+    phrase: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[RelatedPhrases[], number]> {
     let obj = await this.findOneByPhrase(phrase);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
       throw new RelatedPhraseNotRetrieved(phrase);
 
-    return this.find({
+    return this.findAndCount({
       where: { groupId: obj.groupId },
+      skip: skip,
+      take: take,
     });
   }
 
-  async findById(id: string): Promise<RelatedPhrases[]> {
+  async findById(
+    id: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[RelatedPhrases[], number]> {
     let obj = await this.findOneById(id);
 
     if (!RelatedPhrasesRepository.isRelatedPhrases(obj))
       throw new RelatedPhraseNotRetrieved(id);
 
-    return this.find({
+    return this.findAndCount({
       where: { groupId: obj.groupId },
+      skip: skip,
+      take: take,
     });
   }
 
-  async findByMusicId(musicId: string): Promise<RelatedPhrases[]> {
+  async findByMusicId(
+    musicId: string,
+    take: number = 20,
+    skip: number = 0
+  ): Promise<[RelatedPhrases[], number]> {
     return this.createQueryBuilder("relatedPhrases")
       .leftJoin("relatedPhrases.relatedMusic", "music")
       .where("music.id = :musicId", { musicId: musicId })
-      .getMany();
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
   }
-
-  // async findRelatedMusicIdsByQuery(query: string): Promise<string[]> {
-  //   const result = await this.createQueryBuilder("relatedPhrases")
-  //   .leftJoinAndSelect("relatedPhrases.relatedMusic", "music")
-  //     .where((qb) => {
-  //       const subQuery = qb
-  //         .subQuery()
-  //         .select("relatedPhrases.groupId")
-  //         .from(RelatedPhrases, "relatedPhrases")
-  //         .where("MATCH(phrase) AGAINST (:query IN BOOLEAN MODE)", {
-  //           query: query.trim(),
-  //         })
-  //         .getQuery();
-  //       return "groupId IN " + subQuery;
-  //     })
-  //     .andWhere("music.isVerified = true")
-  //     .orderBy("groupId")
-  //     .getMany();
-
-  //     console.log(result);
-
-  //   let musicIds: string[] = [];
-  //   for (let key of result) {
-  //     musicIds.push(...key.relatedMusicIds);
-  //   }
-  //   return [...new Set(musicIds)];
-  // }
 
   async updateRelatedPhrases(
     id: string,
@@ -97,14 +95,19 @@ export class RelatedPhrasesRepository extends Repository<RelatedPhrases> {
   }
 
   async deleteRelatedPhrase(id: string): Promise<boolean> {
-    let phrase = await this.findOneById(id);
-    if (!RelatedPhrasesRepository.isRelatedPhrases(phrase))
+    const relatedPhrasesDet = await this.createQueryBuilder("phrase")
+      .loadRelationCountAndMap(
+        "phrase.relatedMusicCount",
+        "phrase.relatedMusic"
+      )
+      .where("id = :id", { id: id })
+      .getOne();
+    if (!RelatedPhrasesRepository.isRelatedPhrases(relatedPhrasesDet))
       throw new RelatedPhraseNotRetrieved(id);
-
-    // if (phrase.relatedMusicIds.length === 0) {
-    //   await this.delete(id);
-    //   return true;
-    // }
+    if (relatedPhrasesDet.relatedMusicCount === 0) {
+      await this.delete({ id: id });
+      return true;
+    }
     return false;
   }
 
